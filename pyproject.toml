@@ -1,0 +1,18 @@
+[project]
+name = "fleshwound"
+version = "0.0.1"
+description = "Recursive program-writing step on Monty."
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic-monty",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["fleshwound*"]
