@@ -172,13 +172,13 @@ Used by Larql when requesting a Fleshwound child call.
 }
 ```
 
-Validation rules:
+Validation rules (must match `recursion-contract.md` §5.1):
 
-1. `tokens <= parent.remaining.tokens`
-2. `steps <= parent.remaining.steps`
-3. `tool_calls <= parent.remaining.tool_calls`
-4. `depth <= parent.remaining.depth - 1`
-5. all values must be non-negative integers
+1. `tokens <= parent.remaining.tokens` and `tokens >= 0`
+2. `steps <= parent.remaining.steps` and `steps >= 1`
+3. `tool_calls <= parent.remaining.tool_calls` and `tool_calls >= 0`
+4. `depth <= parent.remaining.depth - 1` and `depth >= 1`
+5. all values must be integers
 6. all requested fields are required in v1
 
 If validation fails, Fleshwound returns `budget_denied`.

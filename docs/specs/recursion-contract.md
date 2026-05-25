@@ -40,14 +40,16 @@ def run_step(
 
 Returns a `StepResult` envelope (§4).
 
-## 3. Injected functions
+## 3. Host primitives
 
-Inside a Monty step, the host binds:
+Every executor (§6) receives a `RunContext` exposing the same four primitives. For Monty-based executors, the host binds them as Monty external functions; non-Monty executors call them on `ctx` directly. They are:
 
 - `llm(prompt: str) -> dict` — see §4.1.
 - `step(input: Any, request: BudgetRequest, *, kind=None, default_policy=None, provider=None, ask_user=None) -> StepResult` — recursive call.
-- `ask_user(question: str) -> str` — bound iff the parent provided one.
+- `ask_user(question: str) -> str` — bound iff the parent provided one. Not charged against any budget dimension; may block on the human indefinitely.
 - `budget() -> dict` — read-only snapshot: `{budget_id, tokens_remaining, steps_remaining, depth_remaining, tool_calls_remaining}`.
+
+None of these raise across the executor boundary. Every failure surface is a returned value (the always-dict shape of `llm()` in §4.1; the `{outcome, value, host_error}` envelope of `step()` in §4).
 
 `step(...)` kwargs:
 
@@ -66,8 +68,10 @@ Inside a Monty step, the host binds:
 }
 ```
 
-- `outcome == "ok"` — `value` is the step's final expression, returned verbatim. `host_error` is None.
+- `outcome == "ok"` — `value` is the step's final expression, returned verbatim. `host_error` is None. `value` must be JSON-serializable; the host validates this and substitutes `malformed_result` on failure.
 - `outcome == "host_error"` — the host substituted the result because the step could not produce one. `value` is `None`. `host_error` carries the reason.
+
+The host never raises across the step boundary. `step()` and `run_step()` always return an envelope; uncaught exceptions in executor code are caught and wrapped as `monty_error` (Monty-based) or `executor_error` (non-Monty).
 
 Host-error codes:
 
@@ -77,10 +81,13 @@ Host-error codes:
 | `budget_denied` | A child `step(...)` request was invalid against the parent envelope. |
 | `monty_error` | Unhandled exception in the step's Monty code. The host catches and wraps. |
 | `malformed_result` | Step's final expression was missing or coerced (e.g. not JSON-serializable for spawned mode). |
-| `spawn_failed` | Spawned worker could not start. |
-| `spawn_protocol_error` | Spawned worker returned malformed JSON. |
+| `spawn_failed` | Spawned worker could not start. (Spawned mode is deferred — see `spawned-mode-future.md`.) |
+| `spawn_protocol_error` | Spawned worker returned malformed JSON. (Spawned mode is deferred.) |
 | `unknown_kind` | `kind=` named an entry not in the catalog. |
-| `unresolvable_default` | Default policy could not produce a kind (e.g. `same_as_parent` at the root). |
+| `unresolvable_default` | Default policy could not produce a kind (e.g. `same_as_parent` at the root, or an empty `random_from_subset`). |
+| `executor_error` | Unhandled exception in a non-Monty executor. Wrapped identically to `monty_error`. |
+
+`budget_exhausted` applies to any of `tokens`, `steps`, or `tool_calls` running out mid-execution. Depth violations cannot occur mid-execution — depth is checked only at child-allocation time, where it surfaces as `budget_denied`.
 
 **The host does not inspect or interpret `value`.** Any structure inside `value` (a `status` field, a `program` field, etc.) is a convention of the catalog entry and its caller — not part of this contract.
 
@@ -112,27 +119,30 @@ in every dimension (tokens, steps, tool_calls).
 When a step calls `step(input, request, ...)`, the host validates against the parent's remaining envelope:
 
 ```
-request.tokens     <= parent.remaining.tokens
-request.steps      <= parent.remaining.steps
-request.tool_calls <= parent.remaining.tool_calls
-request.depth      <= parent.remaining.depth − 1
-all values         > 0
+request.tokens     <= parent.remaining.tokens     ;  request.tokens     >= 0
+request.steps      <= parent.remaining.steps      ;  request.steps      >= 1
+request.tool_calls <= parent.remaining.tool_calls ;  request.tool_calls >= 0
+request.depth      <= parent.remaining.depth − 1  ;  request.depth      >= 1
 ```
+
+`tokens` and `tool_calls` may be requested as zero — that is how a parent honestly allocates a non-LLM child (e.g. `constant`, `echo`, `monty_exec`) without padding waste. `steps` and `depth` must be `>= 1`: a step needs to charge its own entry, and depth `0` would forbid the child from running at all.
 
 If validation fails, `step()` returns `outcome: "host_error"` with `host_error.code == "budget_denied"`. Otherwise the host reserves the requested envelope from the parent, opens a child budget, and runs the child.
 
 ### 5.2 Refund
 
-On every child close — `outcome: "ok"` or `outcome: "host_error"` — the host refunds whatever remains in the child envelope to the parent. Refunds emit a `refund_child` ledger event. The invariant in §5 holds because the parent's reserved-but-unused budget returns to its remaining balance.
+On every child close — `outcome: "ok"` or `outcome: "host_error"` — the host refunds whatever remains in the child envelope to the parent. The host emits `refund_child` first, then `close_child`; the ledger is replayable in this order. The invariant in §5 holds because the parent's reserved-but-unused budget returns to its remaining balance.
+
+A denied request (`budget_denied`, `unknown_kind`, `unresolvable_default`) never allocates a child, so no `charge_step`, `refund_child`, or `close_child` events fire — only a `deny` event on the parent.
 
 ## 6. Catalog
 
-Each catalog entry is a named **execution strategy**. The catalog is fixed (defined by the host) but effectively infinite (entries may parameterize over input). Each entry is:
+Each catalog entry is a named **execution strategy**. The catalog is fixed (defined by the host). Kind names are flat strings (no path-like parameterization in v1); a kind that needs variation reads its own `input` and behaves accordingly. Each entry is:
 
 ```
 {
   "name":       str,        # the value passed as `kind=`
-  "executor":   callable,   # host-side function that runs the step
+  "executor":   Executor,   # host-side callable; signature in §6.0
   "convention": str,        # human-readable: what input it expects,
                             # what value it produces, what budget it charges
 }
@@ -140,15 +150,38 @@ Each catalog entry is a named **execution strategy**. The catalog is fixed (defi
 
 Selecting `kind="X"` means "run this step with entry X's executor and convention." The convention is part of the entry's published documentation; the host does not enforce it.
 
+### 6.0 Executor contract
+
+An executor is any host-side callable with signature:
+
+```python
+executor(input: Any, ctx: RunContext) -> Any   # returns the step's value
+```
+
+`RunContext` exposes the host primitives from §3 — `ctx.llm`, `ctx.step`, `ctx.ask_user` (or `None` when the parent did not provide one), `ctx.budget` — plus run configuration (`ctx.provider`, `ctx.seed`, `ctx.budget_id`, `ctx.kind`). These are available to **every** executor; the catalog does not gate access to them. Security relies entirely on the Monty interpreter (for code that an executor chooses to run via Monty) and on the budget invariant in §5.
+
+Monty is one implementation choice for an executor body; it is not host-mandated:
+
+- `program_writer` calls `ctx.llm(...)` for source, then runs it inside Monty with `ctx.{llm,step,ask_user,budget}` bound as Monty external functions, and returns the final expression.
+- `monty_exec` runs `input["code"]` inside Monty with the same external bindings, and returns the final expression.
+- `constant` simply returns `input["value"]` — no Monty involved.
+
+The host wraps every executor invocation with:
+
+1. `charge_step` on entry, after successful allocation, before the executor body runs.
+2. Uncaught exceptions → `host_error{code: "monty_error"}` for executors that ran Monty, or `host_error{code: "executor_error"}` otherwise.
+3. Returned value is checked for JSON-serializability; failure → `host_error{code: "malformed_result"}`.
+4. Wrap into the `{outcome, value, host_error}` envelope (§4).
+
 ### 6.1 Example entries
 
 - **`program_writer`** — LLM-driven. Convention: input is `{"task": str, "context": dict|None, "output_schema": dict|None}`; value is `{"status": "complete"|"partial"|"error", "program": str, "notes": str, "error": ... }`. Charges tokens and one `step`. Documented by `examples/recursive_step_prompt.md`.
 - **`monty_exec`** — non-LLM. Convention: input is `{"code": str}`; value is whatever the executed code's final expression evaluated to. Charges one `step` and no tokens.
-- (others — defined by the catalog author.)
+- (the full catalog under consideration lives in [`recursion-kinds-catalog.md`](recursion-kinds-catalog.md), which doubles as the contract-stress fixture.)
 
 ### 6.2 Charging
 
-Every entry charges one `step` on entry, drawn from the entry's own envelope. Entries are free to charge `tokens` (via `llm()`), `tool_calls` (via provider tool loops), or neither. The entry's `convention` field documents what it charges.
+Every entry charges one `step` on entry (host-enforced, executor cannot skip). Entries are free to charge `tokens` (via `ctx.llm()`), `tool_calls` (via provider tool loops inside `ctx.llm()`), or neither. The entry's `convention` field documents what it charges.
 
 ### 6.3 Default-resolution policy
 
@@ -156,13 +189,29 @@ When `step()` is called without `kind=`, the host resolves a kind from the activ
 
 | Policy | Meaning |
 |---|---|
-| `"same_as_parent"` | Use the parent's kind. Cannot be the active policy at the root step. |
+| `"same_as_parent"` | Use the calling step's kind. Always resolvable inside an executor (the caller always has a kind). |
 | `"random"` | Pick uniformly at random from the entire catalog. |
-| `{"random_from_subset": [names...]}` | Pick uniformly at random from the named subset. |
+| `{"random_from_subset": [names...]}` | Pick uniformly at random from the named subset, after deduplication. |
+
+Edge cases for `random_from_subset`:
+
+- Empty subset (after dedup) → `unresolvable_default`.
+- Any name in the subset not in the catalog → `unknown_kind` (raised at resolution time, before allocation).
+
+The constraint "must be able to resolve without a parent" applies only when resolving the **root step's own kind** (the `run_step(kind=None)` case in §2). `same_as_parent` fails there because the root step has no caller; it is fine as the default policy for the root step's children.
 
 The active policy is inherited from the parent. A step may override it for its subtree via `default_policy=` on `step()`.
 
-All random picks use seeds deterministically derived from `(run_seed, budget_id)`. The same `run_seed` and `input` therefore produce the same execution.
+All random picks use a per-call seed derived as:
+
+```python
+import hashlib
+def derive_seed(run_seed: int, budget_id: str) -> int:
+    h = hashlib.sha256(f"{run_seed}|{budget_id}".encode()).digest()
+    return int.from_bytes(h[:8], "big")
+```
+
+`budget_id` is the deterministic path-like ID of the **child** budget being allocated (e.g. `root.2.1`). The same `run_seed` and `input` therefore produce the same execution.
 
 ## 7. Determinism
 
@@ -176,3 +225,9 @@ Operation is fully determined by:
 - `ask_user` (assumed deterministic or absent).
 
 The host introduces no other variation. This is the "operation entirely determined by input + budget" property — with `provider` and `seed` understood as run configuration. Hidden retries, concurrent execution, and undeclared randomness are forbidden.
+
+Executors must not rely on wall-clock time, OS environment, or other ambient nondeterminism. The Monty language limits restrict imports but still expose `datetime`, `os`, and `asyncio`; executors that bind Monty externals should treat reads of those as "do not, for determinism's sake" — the host does not currently sandbox them further. Tightening this is tracked separately.
+
+## 8. Transport modes
+
+v1 supports **embedded mode only** (single process, in-memory ledger). Spawned mode — running a Fleshwound step in a child process under a serialized budget — is described in `spawned-worker-protocol.md` but is not part of v1's guarantees. See [`spawned-mode-future.md`](spawned-mode-future.md) for the open issues that block enabling it.

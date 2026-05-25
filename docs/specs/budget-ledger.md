@@ -94,13 +94,13 @@ Event kinds:
 
 When Larql requests a Fleshwound tool call, Fleshwound validates the requested child budget against the parent budget.
 
-Validation:
+Validation (canonical wording in `recursion-contract.md` §5.1):
 
 ```text
-request.tokens <= parent.remaining.tokens
-request.steps <= parent.remaining.steps
-request.tool_calls <= parent.remaining.tool_calls
-request.depth <= parent.remaining.depth - 1
+request.tokens     <= parent.remaining.tokens     ;  request.tokens     >= 0
+request.steps      <= parent.remaining.steps      ;  request.steps      >= 1
+request.tool_calls <= parent.remaining.tool_calls ;  request.tool_calls >= 0
+request.depth      <= parent.remaining.depth - 1  ;  request.depth      >= 1
 ```
 
 If valid:
