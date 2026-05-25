@@ -48,6 +48,11 @@ Every executor (§6) receives a `RunContext` exposing the same four primitives. 
 - `step(input: Any, request: BudgetRequest, *, kind=None, default_policy=None, provider=None, ask_user=None) -> StepResult` — recursive call.
 - `ask_user(question: str) -> str` — bound iff the parent provided one. Not charged against any budget dimension; may block on the human indefinitely.
 - `budget() -> dict` — read-only snapshot: `{budget_id, tokens_remaining, steps_remaining, depth_remaining, tool_calls_remaining}`.
+- `catalog -> Mapping[str, str]` — read-only mapping from kind name to its `convention` string (§6). Static for the run, no charging. Allows kinds like `dynamic_dispatch`, `kind_chooser`, and `catalog_self_test` to introspect available kinds without baking the list into a prompt.
+
+These five primitives are the **only** side-effect surface available to an executor. Executors are pure functions of `(input, the values returned by these primitives)`. Kinds may not perform filesystem, network, subprocess, or wall-clock I/O directly; if such an effect is needed, it must enter through a future host primitive added to this list. The exclusion list in `recursion-kinds-catalog.md` (Group M) enumerates the natural-but-disallowed kinds.
+
+`kind=` arguments to `ctx.step()` are runtime strings. There is no compile-time or literal restriction; a kind name computed by Monty code or returned by `ctx.llm()` is just as valid as a literal. The host resolves the string against `ctx.catalog` at the moment of allocation; misses produce `unknown_kind`.
 
 None of these raise across the executor boundary. Every failure surface is a returned value (the always-dict shape of `llm()` in §4.1; the `{outcome, value, host_error}` envelope of `step()` in §4).
 
@@ -72,6 +77,8 @@ None of these raise across the executor boundary. Every failure surface is a ret
 - `outcome == "host_error"` — the host substituted the result because the step could not produce one. `value` is `None`. `host_error` carries the reason.
 
 The host never raises across the step boundary. `step()` and `run_step()` always return an envelope; uncaught exceptions in executor code are caught and wrapped as `monty_error` (Monty-based) or `executor_error` (non-Monty).
+
+v1 returns exactly one `value` per step. There is no streaming/incremental surface: a step is observable to its caller only as a single envelope on completion. Intermediate progress, if any, must be expressed through ledger events, not through partial values. Streaming output is out of v1 scope.
 
 Host-error codes:
 
@@ -224,7 +231,13 @@ Operation is fully determined by:
 - `provider` (and any state it carries),
 - `ask_user` (assumed deterministic or absent).
 
-The host introduces no other variation. This is the "operation entirely determined by input + budget" property — with `provider` and `seed` understood as run configuration. Hidden retries, concurrent execution, and undeclared randomness are forbidden.
+The host introduces no other variation. This is the "operation entirely determined by input + budget" property — with `provider` and `seed` understood as run configuration. The following are forbidden:
+
+1. Hidden retries.
+2. Concurrent execution (sibling children run sequentially; no parallel `ctx.step`).
+3. Undeclared randomness.
+4. **Hidden state across host-primitive calls.** An executor's behavior on call N must depend only on `input` and on the values it has received back from earlier `ctx.*` calls in the same step. The host carries no cross-call memory on behalf of the executor; concretely, a multi-turn conversation must round-trip its full history through `input`, not through any host-side cache.
+5. **Hidden state across runs.** The same `(input, budget, seed, provider, kind, default_policy)` tuple produces the same execution every time. Memoization-across-runs is therefore disallowed in the host; safe in-step memoization (a pure function of `input`) is the only legal form. See `recursion-kinds-catalog.md` Group P for content-hash caching that respects this constraint.
 
 Executors must not rely on wall-clock time, OS environment, or other ambient nondeterminism. The Monty language limits restrict imports but still expose `datetime`, `os`, and `asyncio`; executors that bind Monty externals should treat reads of those as "do not, for determinism's sake" — the host does not currently sandbox them further. Tightening this is tracked separately.
 

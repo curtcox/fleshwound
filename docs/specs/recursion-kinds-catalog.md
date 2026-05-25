@@ -194,6 +194,293 @@ For each kind:
 
 ---
 
+---
+
+## Group G — Dynamic dispatch (kind chosen at runtime)
+
+### `dynamic_dispatch`
+
+- **input** — `{"chooser": "literal"|"llm", "literal_kind": str|null, "task_for_chooser": str|null, "inner_input": Any}`.
+- **value** — `{"chosen_kind": str, "result": StepResult}`.
+- **uses** — optionally `ctx.llm` to pick a kind name (Monty assembles a prompt listing `ctx.catalog`), then `ctx.step(inner_input, request, kind=chosen_kind)`.
+- **stresses** — that `kind=` accepts a runtime-computed string (no compile-time restriction); host's `unknown_kind` path when the chooser hallucinates a name; need for `ctx.catalog` (see C-10).
+
+### `meta_planner`
+
+- **input** — `{"task": str}`.
+- **value** — `{"plan": [{"kind": str, "input": Any}], "results": [StepResult]}`.
+- **uses** — one `ctx.llm` to produce a JSON plan, then a sequential loop of `ctx.step` per plan item.
+- **stresses** — kinds-as-data: the catalog is materially exposed to the LLM and the model decides decomposition shape, not just content.
+
+### `cascade`
+
+- **input** — `{"inner_input": Any, "kinds": [str], "stop_predicate": str}`.
+- **value** — `{"chosen_kind": str|null, "result": StepResult, "tried": [str]}`.
+- **uses** — `ctx.step` for each kind in `kinds` in order, stopping when the predicate (a small Monty expression over the returned value) is satisfied.
+- **stresses** — refund correctness: each failed attempt must refund into the parent envelope so the next attempt has budget.
+
+### `cond_dispatch`
+
+- **input** — `{"branches": [{"when": str, "kind": str}], "default_kind": str|null, "inner_input": Any}`.
+- **value** — `{"chosen_kind": str, "result": StepResult}`.
+- **uses** — evaluates each `when` (Monty predicate over `inner_input`) and dispatches; falls through to `default_kind`.
+- **stresses** — pure-Monty dispatch without an LLM round; useful as a deterministic baseline for `meta_planner`.
+
+---
+
+## Group H — Structured-data shapes (the user's "function map" family)
+
+### `function_map_writer`
+
+- **input** — `{"signatures": {name: {"signature": str, "docstring": str}}, "context": dict|None}`.
+- **value** — `{"functions": {name: {"source": str, "notes": str}}, "missing": [str]}`.
+- **uses** — typically one `ctx.step(kind="program_writer")` per function for medium-large maps; for small maps a single `ctx.llm`.
+- **stresses** — fan-out where the count of children is data-dependent; aggregation back into a map keyed by the same names; convention that the result's keys must be a subset of the input's keys (kind-enforced, not host-enforced).
+
+### `function_map_editor`
+
+- **input** — `{"current": {name: {"source": str}}, "edits": [{"name": str, "instruction": str}]}`.
+- **value** — `{"updated": {name: {"source": str}}, "removed": [str], "added": [str]}`.
+- **stresses** — in-place transform shape: same data type in and out; `removed` and `added` keys make the diff explicit so callers don't have to diff themselves.
+
+### `schema_designer`
+
+- **input** — `{"domain": str, "examples": [Any]|null}`.
+- **value** — `{"schema": dict, "rationale": str}` — `schema` is a JSON Schema document.
+- **uses** — `ctx.llm`.
+
+### `ast_transform`
+
+- **input** — `{"ast": dict, "transform": str}` — `ast` is a JSON-encoded AST in any convention; `transform` is prose.
+- **value** — `{"ast": dict, "changes": [str]}`.
+- **stresses** — value being a recursive nested structure that round-trips JSON; confirms there is no hidden depth limit on `value` (other than JSON's own).
+
+### `diff_writer`
+
+- **input** — `{"file": str, "content": str, "change": str}`.
+- **value** — `{"diff": str, "format": "unified"}`.
+
+### `patch_set_writer`
+
+- **input** — `{"files": {path: str}, "task": str}`.
+- **value** — `{"patches": [{"path": str, "diff": str}]}`.
+- **stresses** — companion to `directory_input`; produces a structure that a caller can mechanically apply without re-prompting the model.
+
+---
+
+## Group I — Filesystem-backed I/O (without granting executors FS access)
+
+> v1 stance: kinds **never** touch the filesystem. The caller materializes input from disk into a JSON blob and writes outputs back. This keeps determinism and sandboxing tight; the alternative (a `ctx.fs` primitive) is C-8 below.
+
+### `directory_input`
+
+- **input** — `{"tree": {path: {"content": str, "mode": str}}, "task": str}` — a virtual tree, keyed by path relative to a notional root.
+- **value** — defined by the task; this kind is a thin wrapper that delegates to e.g. `program_writer` after assembling a prose `context` from the tree.
+- **stresses** — large inputs (a repo subtree may be megabytes of JSON); tests that the contract has no implicit size limit but also surfaces that `value` size will hit the provider's token limit long before the host's JSON limit.
+
+### `directory_writer`
+
+- **input** — `{"task": str, "shape": "tree"|"flat"}`.
+- **value** — `{"tree": {path: {"content": str, "mode": str}}, "notes": str}`.
+- **stresses** — symmetric to `directory_input`; combined, the pair lets the caller (not the kind) own all FS state.
+
+### `repo_walker`
+
+- **input** — `{"tree": {path: ...}, "per_file_kind": str, "predicate": str}`.
+- **value** — `{"per_file": {path: StepResult}}`.
+- **uses** — one `ctx.step` per matching path.
+- **stresses** — large fan-out plus per-child budget sizing decisions; this is where parents will most often hit `budget_denied` because they evenly divided budget over too many files.
+
+### `patch_applier_proxy`
+
+- **input** — `{"patches": [...]}`.
+- **value** — `{"applied": [str], "rejected": [{"path": str, "reason": str}]}`.
+- **stresses** — this is a **pure-data** kind: it simulates application but doesn't touch disk. Pairs with a caller-side real applier. The point: even FS-mutating intent is modelable inside the contract by emitting structured outputs.
+
+---
+
+## Group J — Iterative / multi-turn
+
+### `refine_until`
+
+- **input** — `{"inner_input": Any, "inner_kind": str, "judge_kind": str, "max_rounds": int, "judge_pass_predicate": str}`.
+- **value** — `{"rounds": int, "history": [{"candidate": Any, "verdict": Any}], "final": Any}`.
+- **uses** — alternating `ctx.step(inner_kind, ...)` and `ctx.step(judge_kind, ...)`.
+- **stresses** — composition of two kinds in a loop; budget shrinkage round-over-round (parents must size the loop's total envelope).
+
+### `conversation`
+
+- **input** — `{"system": str, "turns": [{"role": str, "content": str}]}`.
+- **value** — `{"reply": str, "turns": [...]}` — the turns appended with the new exchange.
+- **uses** — `ctx.llm` once.
+- **stresses** — that there is **no hidden state** between calls: the entire conversation history must be carried in `input`. The contract's determinism property depends on this; this kind exists partly to make the invariant explicit.
+
+### `tournament`
+
+- **input** — `{"candidates": [Any], "judge_kind": str}`.
+- **value** — `{"winner": Any, "bracket": [...]}`.
+- **uses** — log₂(N) rounds of pairwise `ctx.step(judge_kind, ...)`.
+- **stresses** — N children sequential; deterministic bracket ordering tied to `budget_id` numbering.
+
+---
+
+## Group K — Composition
+
+### `pipeline`
+
+- **input** — `{"stages": [{"kind": str, "transform_input": str|null}], "initial": Any}`.
+- **value** — `{"stages": [StepResult], "final": Any}`.
+- **uses** — sequential `ctx.step` with each stage's value feeding the next (optionally massaged by a Monty `transform_input` snippet).
+
+### `transformer`
+
+- **input** — `{"preprocess": str, "inner_kind": str, "postprocess": str, "inner_input_template": Any}`.
+- **value** — postprocessed value of the inner step.
+- **stresses** — wrappers around existing kinds without needing to register a new entry per variant.
+
+### `precondition_gate`
+
+- **input** — `{"predicate": str, "inner_kind": str, "inner_input": Any}`.
+- **value** — either the inner result or `{"gated": true, "reason": str}`.
+- **uses** — Monty evaluates `predicate` against `inner_input`; if false, no `ctx.step` is made.
+
+---
+
+## Group L — Catalog-aware / introspective
+
+### `kind_lister`
+
+- **input** — `{}`.
+- **value** — `{"kinds": [{"name": str, "convention": str}]}`.
+- **uses** — reads `ctx.catalog`.
+- **stresses** — C-10 below: `ctx.catalog` must be exposed for this to work. The kind is the smoking gun for the missing primitive.
+
+### `kind_chooser`
+
+- **input** — `{"task": str}`.
+- **value** — `{"chosen_kind": str, "rationale": str}`.
+- **uses** — `ctx.llm` with `ctx.catalog` rendered into the prompt.
+
+### `catalog_self_test`
+
+- **input** — `{"kinds_to_exercise": [str]|null}`.
+- **value** — `{"results": [{"kind": str, "outcome": str, "host_error": ...}]}`.
+- **uses** — one `ctx.step` per kind, with each kind's smallest viable input.
+- **stresses** — every host-error code (paired with `always_host_error` fixtures from Group E).
+
+---
+
+---
+
+## Group N — Scoring and grading
+
+### `rubric_grader`
+
+- **input** — `{"candidate": Any, "rubric": [{"criterion": str, "weight": float, "scale": "0-1"|"0-5"|"pass-fail"}]}`.
+- **value** — `{"scores": [{"criterion": str, "score": float, "rationale": str}], "weighted_total": float, "notes": str}`.
+- **uses** — `ctx.llm` per criterion (or batched into one call for small rubrics).
+- **stresses** — composes upstream of `tournament`, `refine_until`, and `ensemble`; demonstrates that `judge` was a binary special case of this.
+
+### `pairwise_preference`
+
+- **input** — `{"a": Any, "b": Any, "criterion": str}`.
+- **value** — `{"winner": "a"|"b"|"tie", "rationale": str, "confidence": float}`.
+- **uses** — `ctx.llm`.
+- **stresses** — the unit operation under `tournament`; isolating it from the loop lets the bracket reason about ties.
+
+### `calibration`
+
+- **input** — `{"grader_kind": str, "examples": [{"item": Any, "gold_score": float}]}`.
+- **value** — `{"agreement": float, "per_example": [{"predicted": float, "gold": float}], "bias": float}`.
+- **uses** — one `ctx.step(grader_kind, ...)` per example, then a small Monty reduction.
+- **stresses** — meta-evaluation: grading the grader. Fan-out is exactly `len(examples)`, so this is the smallest kind that gives a parent a real budget-sizing problem.
+
+### `score_aggregator`
+
+- **input** — `{"scores": [{"score": float, "weight": float}], "policy": "weighted_mean"|"median"|"min"}`.
+- **value** — `{"aggregate": float, "n": int}`.
+- **uses** — none (pure Monty).
+- **stresses** — that some kinds genuinely need no `ctx.*` primitives at all. Pairs with `rubric_grader` so a parent doesn't have to write reduction code inline.
+
+---
+
+## Group O — Adversarial / red-team
+
+### `attack_generator`
+
+- **input** — `{"target_kind": str, "target_input_template": dict, "attack_goal": str}` — e.g. `"make target return status:error"`.
+- **value** — `{"crafted_input": Any, "rationale": str}`.
+- **uses** — `ctx.llm`; reads `ctx.catalog[target_kind]` to ground the attack in the target's documented convention.
+- **stresses** — `ctx.catalog` is load-bearing here; without it the attacker has no documentation to read.
+
+### `adversarial_loop`
+
+- **input** — `{"target_kind": str, "seed_input": Any, "max_rounds": int, "success_predicate": str}`.
+- **value** — `{"rounds": int, "history": [{"input": Any, "target_result": StepResult, "successful": bool}], "winning_input": Any|null}`.
+- **uses** — alternating `ctx.step(kind="attack_generator", ...)` and `ctx.step(target_kind, ...)`.
+- **stresses** — confirms a kind can be both a parent and a target of attack on other kinds in the same run; no host-level distinction between "victim" and "attacker."
+
+### `failure_classifier`
+
+- **input** — `{"step_result": StepResult}`.
+- **value** — `{"category": "host_error"|"convention_violation"|"semantic_error"|"ok", "subcategory": str, "evidence": str}`.
+- **uses** — `ctx.llm` (and possibly `ctx.catalog` to look up the expected value convention).
+- **stresses** — a kind whose **input** is itself a `StepResult` envelope; tests that envelopes round-trip through JSON cleanly and that callers can pass them down without unwrapping.
+
+### `regression_canary`
+
+- **input** — `{"frozen_input": Any, "frozen_kind": str, "expected_value_hash": str}`.
+- **value** — `{"passed": bool, "actual_hash": str, "result": StepResult}`.
+- **uses** — `ctx.step(frozen_kind, frozen_input, ...)` then hashes its value.
+- **stresses** — the determinism property (§7) directly: re-running the same fixture must hash-match, so this kind doubles as the contract test for "same `(input, budget, seed, provider)` → same value."
+
+---
+
+## Group P — Convention translation and content-hash caching
+
+### `convention_adapter`
+
+- **input** — `{"source_kind": str, "target_kind": str, "source_value": Any}`.
+- **value** — `{"target_input": Any, "lossy": bool, "notes": str}`.
+- **uses** — `ctx.llm`, reading both `ctx.catalog[source_kind]` and `ctx.catalog[target_kind]`.
+- **stresses** — kind A's value becomes kind B's input via an explicit translation step. Example: take `program_writer`'s `{status, program, notes}` and produce `function_map_writer`'s `{signatures: ...}`. This is what makes the catalog **composable** rather than a flat list of disconnected entries.
+
+### `chain_with_adapter`
+
+- **input** — `{"first_kind": str, "first_input": Any, "second_kind": str}`.
+- **value** — `{"first_result": StepResult, "adapted_input": Any, "second_result": StepResult}`.
+- **uses** — `ctx.step(first_kind, ...)`, then `ctx.step(kind="convention_adapter", ...)`, then `ctx.step(second_kind, ...)`.
+- **stresses** — three-step linear composition where the middle step is itself a kind. Demonstrates that adapters live in the catalog, not in host glue code.
+
+### `content_hash_memo`
+
+- **input** — `{"inner_kind": str, "inner_input": Any, "memo": {hash_str: Any}|null}`.
+- **value** — `{"hash": str, "value": Any, "hit": bool, "memo": {hash_str: Any}}`.
+- **uses** — Monty hashes `(inner_kind, inner_input)`; if the hash is in `memo`, returns the cached value; otherwise calls `ctx.step(inner_kind, inner_input, ...)` and adds to memo.
+- **stresses** — the **legal** form of memoization under §7 constraint 5: the cache is part of `input` and `value`, so the parent carries it explicitly. No host-side state, no cross-run cache. A parent that wants memoization across iterations of a loop threads the `memo` through each call; a parent that doesn't, doesn't.
+
+### `dedup_then_map`
+
+- **input** — `{"items": [Any], "inner_kind": str}`.
+- **value** — `{"results_by_hash": {hash_str: StepResult}, "items_to_hash": [str]}`.
+- **uses** — hashes each item, calls `ctx.step(inner_kind, ...)` exactly once per unique hash, returns a map keyed by hash plus a parallel list mapping each input position to its hash.
+- **stresses** — `map_reduce`'s sibling for the case where many inputs collapse to few unique computations; content-hash dedup is the only safe memoization in the deterministic model.
+
+---
+
+## Group M — Explicitly excluded from v1 (documented to mark the boundary)
+
+These kinds would be natural to write but are **disallowed** in v1 because they break determinism or sandboxing. They are listed here so future readers do not re-propose them under another name.
+
+- **`shell_exec`** — runs a subprocess. Side-effecting, nondeterministic, can escape the budget. v2 candidate as a host-side gated primitive only.
+- **`http_fetch`** — out-of-process I/O. Same reasoning; results vary by network state and time.
+- **`filesystem_read_direct`** — bypasses `directory_input`. Allowing it makes determinism a caller responsibility, which the contract currently keeps as a host invariant.
+- **`sleep`** / **`wall_clock`** — explicit nondeterminism.
+- **`spawn_concurrent`** — concurrent siblings. §7 forbids; included here so it's not silently reintroduced under a different name.
+- **`cached`** — memoization across runs. Memo is fine inside one step's input (pure function of input), but a persistent cache that mutates between runs would break the "operation entirely determined by `(input, budget, seed, provider)`" property.
+
+If any of these become necessary, they require a contract change, not just a new catalog entry.
+
 ## Contract issues found
 
 Writing this list surfaced these residual ambiguities. They are not blocking — most can be resolved by a one-line clarification in `recursion-contract.md` — but should be settled before implementation.
@@ -212,4 +499,14 @@ Writing this list surfaced these residual ambiguities. They are not blocking —
 
 - **C-7. Charging order on `ctx.llm()` failure.** `budget-ledger.md` §6 says tokens are charged "for whatever the provider reports, including on failure." But §4.1's `llm()` return shape has `usage` field always populated. If the provider returns `{status: "error", usage: {prompt_tokens: 0, ...}, ...}` is the charge zero? Recommend: yes, charge whatever `usage.total_tokens` reports, including zero. Document explicitly.
 
-These eight issues collectively are the second pass over the contract. Resolving them and writing the matching test fixtures from the catalog above is the work that lets implementation begin without rework.
+- **C-8. Side effects and the executor surface.** The catalog's filesystem family (Group I) and the exclusion list (Group M) together expose that the contract has no explicit stance on side effects. v1 default is "executors are pure functions of `(input, ctx-primitive returns)`"; the four `ctx.*` primitives are the only ways out. Recommendation: add one sentence to `recursion-contract.md` §3 saying exactly that, and reference Group M's reasoning. Without it, the next kind author may assume `import requests` is fair game.
+
+- **C-9. `ctx.catalog` introspection.** Several kinds (`dynamic_dispatch`, `meta_planner`, `cascade`, `cond_dispatch`, `kind_lister`, `kind_chooser`, `catalog_self_test`) need to read the available kind names and conventions at runtime. The contract currently does not expose them. Recommendation: add `ctx.catalog: Mapping[str, str]` (name → convention string) as a fifth primitive. Read-only, no charging, no nondeterminism (it's static for the run).
+
+- **C-10. Runtime-computed `kind=`.** `dynamic_dispatch` and `meta_planner` pass a string computed at runtime as `kind=`. Per Q4 this is allowed (kind names are flat strings, behavior comes from input). Worth one line in §6 confirming there is no compile-time / literal restriction.
+
+- **C-11. No hidden state across `ctx.llm` / `ctx.step` calls.** `conversation` is the kind that makes this load-bearing — the entire turn history lives in `input`, not in the host. Recommendation: §7 already implies this but should state it as a numbered constraint, since it directly contradicts how most "chat" libraries work and will be a surprise.
+
+- **C-12. Streaming / incremental output.** Several patterns (`refine_until`, `tournament`, long `conversation`) would benefit from emitting intermediate progress before the final `value`. v1 has no surface for it (one `value` per step). Explicitly out of scope — note in §4 as "v1 returns exactly one value per step; intermediate progress, if any, is logged via the ledger, not returned to the caller."
+
+These twelve issues collectively are the second pass over the contract. As of this revision, C-1 through C-12 are all reflected in `recursion-contract.md`; the remaining open question is C-1's optional `resolved_kind` field on `StepResult`, which is small enough to fold in during implementation. Resolving them and writing the matching test fixtures from the catalog above is the work that lets implementation begin without rework.
