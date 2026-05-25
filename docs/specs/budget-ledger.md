@@ -82,7 +82,7 @@ Event kinds:
 | Kind | Meaning |
 |---|---|
 | `create_root` | Root budget created. |
-| `allocate_child` | Parent budget reserved for a child. |
+| `allocate_child` | Parent budget reserved for a child. The event's `amount` carries the requested envelope; the event's `reason` carries the resolved kind name (e.g. `"allocate_child kind=program_writer"`). When default-policy resolution picked the kind, this is the only place the choice is recorded; envelopes do not surface it. |
 | `charge_tokens` | Tokens charged. |
 | `charge_step` | Step charged. |
 | `charge_tool_call` | Tool call charged. |

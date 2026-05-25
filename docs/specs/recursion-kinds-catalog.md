@@ -134,15 +134,15 @@ For each kind:
 ### `random_pick`
 
 - **input** — `{"inner_input": Any}`.
-- **value** — `{"chosen_kind": str, "result": StepResult}`.
+- **value** — `{"result": StepResult}`.
 - **charges** — one child step.
 - **uses** — `ctx.step` with `kind=None` and `default_policy="random"`.
-- **stresses** — §6.3 seed derivation. Two runs with the same `run_seed` and parent `budget_id` must pick the same child kind. Also stresses that `ctx.step()` reports back which kind was actually chosen (or that the parent can read it from somewhere — open: see issue C-2).
+- **stresses** — §6.3 seed derivation. Two runs with the same `run_seed` and parent `budget_id` must pick the same child kind. (Which kind was picked is recorded on the `allocate_child` ledger event; the envelope does not surface it.)
 
 ### `subset_pick`
 
 - **input** — `{"inner_input": Any, "subset": [str]}`.
-- **value** — `{"chosen_kind": str, "result": StepResult}`.
+- **value** — `{"result": StepResult}`.
 - **uses** — `ctx.step` with `default_policy={"random_from_subset": subset}`.
 - **stresses** — §6.3 edge cases: empty subset → `unresolvable_default`; unknown name → `unknown_kind`; dedup of repeated names.
 
@@ -201,7 +201,7 @@ For each kind:
 ### `dynamic_dispatch`
 
 - **input** — `{"chooser": "literal"|"llm", "literal_kind": str|null, "task_for_chooser": str|null, "inner_input": Any}`.
-- **value** — `{"chosen_kind": str, "result": StepResult}`.
+- **value** — `{"chosen_kind": str, "result": StepResult}` — `chosen_kind` is the string this kind itself computed and passed to `ctx.step`; it knows it because it produced it, not because the host reported it.
 - **uses** — optionally `ctx.llm` to pick a kind name (Monty assembles a prompt listing `ctx.catalog`), then `ctx.step(inner_input, request, kind=chosen_kind)`.
 - **stresses** — that `kind=` accepts a runtime-computed string (no compile-time restriction); host's `unknown_kind` path when the chooser hallucinates a name; need for `ctx.catalog` (see C-10).
 
@@ -485,7 +485,7 @@ If any of these become necessary, they require a contract change, not just a new
 
 Writing this list surfaced these residual ambiguities. They are not blocking — most can be resolved by a one-line clarification in `recursion-contract.md` — but should be settled before implementation.
 
-- **C-1. `ctx.step()` return on default-policy resolution.** Does the returned envelope include the kind that was actually chosen, so kinds like `random_pick` can report it without having to re-derive the seed? Recommendation: extend `StepResult` with an optional `resolved_kind: str` field, populated by the host when default-policy resolution ran. Pure cost: one extra field. Without it, `random_pick` and `subset_pick` cannot honestly fill in `chosen_kind`.
+- **C-1. ~~`ctx.step()` return on default-policy resolution.~~** *(Resolved — rejected.)* Originally proposed adding `resolved_kind` to `StepResult` so kinds like `random_pick` could honestly fill in `chosen_kind`. On review: a caller that cares about the kind specifies it; a caller that did not specify has no use for the answer in its control flow. The only real consumer is post-hoc log analysis, which belongs on the ledger, not the envelope. Resolution: record `resolved_kind` on the `allocate_child` ledger event; do **not** add it to `StepResult`. As a consequence, `random_pick`, `subset_pick`, and `dynamic_dispatch`'s `chosen_kind` field is dropped from their value conventions — those kinds return only `result: StepResult`. Log readers can join against the ledger via `budget_id`.
 
 - **C-2. Where do executors find their own kind?** §6.0 says `ctx.kind` exposes it; that is new in this edit. Confirm. (`inherit_chain` needs it to build its trace.)
 
@@ -509,4 +509,4 @@ Writing this list surfaced these residual ambiguities. They are not blocking —
 
 - **C-12. Streaming / incremental output.** Several patterns (`refine_until`, `tournament`, long `conversation`) would benefit from emitting intermediate progress before the final `value`. v1 has no surface for it (one `value` per step). Explicitly out of scope — note in §4 as "v1 returns exactly one value per step; intermediate progress, if any, is logged via the ledger, not returned to the caller."
 
-These twelve issues collectively are the second pass over the contract. As of this revision, C-1 through C-12 are all reflected in `recursion-contract.md`; the remaining open question is C-1's optional `resolved_kind` field on `StepResult`, which is small enough to fold in during implementation. Resolving them and writing the matching test fixtures from the catalog above is the work that lets implementation begin without rework.
+These twelve issues collectively are the second pass over the contract. C-1 was rejected and recorded as a ledger-event field; C-2 through C-12 are reflected in `recursion-contract.md` and `budget-ledger.md`. No open contract items remain. Resolving them and writing the matching test fixtures from the catalog above is the work that lets implementation begin without rework.
