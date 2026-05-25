@@ -13,14 +13,40 @@ Keep two things separate:
 
 ## Tools (call them as functions)
 
-- `llm(prompt: str) -> str` — one stateless model call. Use for a focused piece of work: drafting a single function, reviewing a snippet, condensing context. Charges tokens.
-- `step(input: dict, request: dict) -> dict` — delegate a sub-problem to a fresh recursive step with its own budget. `request` is the child budget envelope:
+- `llm(prompt: str) -> dict` — one stateless model call. Always returns a dict:
+
+  ```python
+  {
+    "status": "ok" | "error",
+    "text": str,                  # "" when status == "error"
+    "usage": {                    # tokens actually charged to your budget
+      "prompt_tokens": int,
+      "completion_tokens": int,
+      "total_tokens": int,
+    },
+    "error": {                    # required iff status == "error"
+      "code": str,                # "model_error", "budget_exhausted", etc.
+      "message": str,
+    } | None,
+  }
+  ```
+
+  Tokens are charged for whatever the provider reported, even on failure (typically the prompt tokens). Always check `status` before reading `text`. Use for a focused piece of work: drafting a single function, reviewing a snippet, condensing context.
+- `step(input: dict, request: dict) -> dict` — delegate a sub-problem to a fresh recursive step with its own budget.
+
+  `input` has the same shape as your own input:
+
+  ```python
+  {"task": str, "context": dict | None, "output_schema": dict | None}
+  ```
+
+  `request` is the child budget envelope:
 
   ```python
   {"tokens": int, "steps": int, "depth": int, "tool_calls": int}
   ```
 
-  All fields are required and must be positive integers. The host validates:
+  All `request` fields are required and must be positive integers. The host validates against your remaining envelope:
 
   ```
   tokens      <= remaining.tokens
@@ -29,7 +55,7 @@ Keep two things separate:
   depth       <= remaining.depth - 1
   ```
 
-  Calling `step()` also charges one of **your** `steps` (the child's own step charge is taken from the child envelope). Unused child budget is **automatically refunded** to your remaining balance on return. Returns the child's output dict (see Output below — including the `error` arm).
+  The child's own per-step charge comes from its envelope, not from yours; you "pay" for the call by handing over the allocation. Unused child budget — including leftovers from a child that errored — is **automatically refunded** to your remaining balance on return. Whether the child runs embedded (same process) or spawned (isolated process) is a host policy decision; you cannot select it. Returns the child's output dict (see Output below — including the `error` arm).
 
 - `ask_user(question: str) -> str` — ask the human a question and receive their answer. **May be unavailable.** Check `context["ask_user_available"]`; if it is missing or false, do not call `ask_user` — proceed with best-effort assumptions and record them in `notes`. When available, use only when genuinely ambiguous; human attention is expensive — ask rarely, batch questions when you can, and make each one specific.
 - `budget() -> dict` — read your remaining allowance:
@@ -95,6 +121,14 @@ Set `status` honestly:
 - `error`    — you could not produce a usable program; populate `error`.
 
 Error codes you may produce or propagate: `budget_denied`, `budget_exhausted`, `invalid_tool_call`, `unknown_tool`, `tool_loop_exceeded`, `spawn_failed`, `spawn_protocol_error`, `model_error`, `monty_error`. Most of these come from a `step(...)` you made — propagate them upward rather than swallowing.
+
+## Failure modes
+
+You do not need to defend the host from your own bugs — the host has safety nets — but knowing them helps you write defensively:
+
+- **Unhandled exception in your code.** The host catches it, builds an output dict with `status: "error"`, `error.code: "monty_error"`, and a traceback summary in `notes`, and returns that to your caller. Your caller sees a normal `error`-arm result. Prefer to catch where you can recover; only let exceptions escape when there is genuinely nothing useful to return.
+- **Malformed final expression** (not a dict, missing `status`, status not in the enum). Treated identically: coerced into a `monty_error` result with `notes` containing `repr(value)`. Don't rely on this — return a valid dict.
+- **Budget exhaustion mid-execution.** The host can stop you between external calls. Whatever the host emits in that case will reach your caller; you cannot intervene. This is why "produce a usable result **early**" matters.
 
 ## Language limits (you are writing a Python subset)
 

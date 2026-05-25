@@ -275,7 +275,7 @@ Larql may return either final text or a tool call.
 }
 ```
 
-Fleshwound charges `usage.total_tokens` to the active budget.
+Fleshwound charges `usage.total_tokens` to the active budget. The Monty-visible `llm()` host function repackages this into its always-dict return shape (`{status: "ok", text, usage, error: None}`). On provider failure, the host charges whatever usage was reported (typically prompt tokens only) and returns `{status: "error", text: "", usage, error: {code, message}}`.
 
 ### Tool-call response
 

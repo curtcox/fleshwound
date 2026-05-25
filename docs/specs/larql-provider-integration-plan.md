@@ -182,19 +182,43 @@ Replace local budget dict mutation with ledger operations.
 
 Host functions:
 
-- `llm(prompt)` creates a `ModelRequest`, calls provider, charges usage, returns text.
-- `step(sub_input, request)` validates `request` (a `BudgetRequest` dict with `tokens`/`steps`/`depth`/`tool_calls`), charges one of the caller's `steps`, allocates the child budget, recursively invokes Runner, then refunds unused child budget to the caller.
+- `llm(prompt)` creates a `ModelRequest`, calls provider, charges reported usage (including on failure), and **always returns a dict**: `{status: "ok"|"error", text: str, usage: {prompt_tokens, completion_tokens, total_tokens}, error: {code, message}|None}`.
+- `step(sub_input, request)` validates `sub_input` (`{task, context, output_schema}`) and `request` (a `BudgetRequest` dict with `tokens`/`steps`/`depth`/`tool_calls`), allocates the child budget from the parent's envelope, recursively invokes Runner, then refunds unused child budget to the parent — including on child failure. The embedded-vs-spawned execution choice is made by host policy, not by the step author; no `mode` parameter is exposed in the Monty surface.
 - `ask_user(question)` is host-configured and may be absent. When present, the host sets `context["ask_user_available"] = True` for the step. When absent, the name is not bound in the Monty namespace.
 - `budget()` returns a read-only snapshot with shape `{budget_id, tokens_remaining, steps_remaining, depth_remaining, tool_calls_remaining}`.
 
-Public entry point: `run_step(task, budget, provider, *, context=None, output_schema=None, ask_user=None) -> dict`. The returned dict matches the step output shape (3-arm `status`).
+Child steps inherit the parent's `provider`; there is no per-step provider override in the Monty surface.
+
+Public entry point:
+
+```python
+def run_step(
+    task: str,
+    budget: BudgetLimit,           # not BudgetRequest; root has no parent
+    provider: ModelProvider,
+    *,
+    context: dict | None = None,
+    output_schema: dict | None = None,
+    ask_user: Callable[[str], str] | None = None,
+) -> dict:
+    ...
+```
+
+The returned dict matches the step output shape (3-arm `status`, with the `error` arm populated iff `status == "error"`).
+
+Host safety nets (the Runner is responsible for both):
+
+- Unhandled Python exceptions raised inside step code are caught and coerced into a `status: "error"`, `error.code: "monty_error"` result; a traceback summary is placed in `notes`. The exception does not propagate past the step boundary.
+- A malformed final expression (not a dict, missing `status`, status not in the enum) is coerced into the same `monty_error` result, with `repr(value)` in `notes`.
 
 Acceptance criteria:
 
 - Monty-visible API is `llm`, `step`, `budget`, and conditionally `ask_user`;
+- `llm(...)` always returns a dict and never raises across the host boundary;
 - recursive `step(...)` cannot exceed budget;
 - `step(...)` returns a 3-arm status dict (`complete` / `partial` / `error`); budget denial is observable to the step author as `status == "error"` with `error.code == "budget_denied"`;
-- unused child budget is auto-refunded and emits a `refund_child` ledger event;
+- unused child budget is auto-refunded on **every** child close (complete, partial, or error) and emits a `refund_child` ledger event;
+- unhandled exceptions and malformed final expressions become `monty_error` results, not host crashes;
 - runner handles provider tool loops indirectly;
 - `output_schema` validation is advisory: mismatches are logged, the step's return value is passed through unchanged.
 

@@ -113,6 +113,14 @@ If valid:
 
 **Default: refund unused child budget.** A refund emits a `refund_child` event whose `amount` records the dimensions returned to the parent. This default is part of the recursion contract — step authors are told their unused requests come back — and may not be silently disabled.
 
+Refund fires on **every** child close, regardless of the child's outcome:
+
+- `status: "complete"` — refund whatever is left in the child envelope.
+- `status: "partial"` — refund whatever is left.
+- `status: "error"` (including `monty_error`, `budget_exhausted`, `model_error`) — refund whatever is left. The child does not "forfeit" its envelope by failing.
+
+A child killed by `budget_exhausted` may report `used == limit` in one or more dimensions; in that case the refund amount for those dimensions is zero, which is correct and still emits the event.
+
 ## 6. Charging rules
 
 ### Step charge
@@ -134,6 +142,8 @@ Larql generation charges tokens using reported usage:
 ```
 
 If exact usage is not available, the provider may use a deterministic estimate. The estimate must be recorded as an estimated charge in the event reason.
+
+Tokens are charged for whatever the provider reports, **including on failure**. A failed `llm()` call (`model_error`, network error, malformed response) typically charges the prompt tokens but no completion tokens. The charge event's `reason` should distinguish success from failure (e.g. `"larql generation (model_error)"`) so the ledger is auditable.
 
 ### Tool-call charge
 
