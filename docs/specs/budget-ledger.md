@@ -109,9 +109,9 @@ If valid:
 2. Child budget is created.
 3. Child execution runs under that budget.
 4. Child usage is reconciled on close.
-5. Unused child budget is refunded unless explicitly configured otherwise.
+5. Unused child budget is refunded to the parent.
 
-Recommended default: refund unused child budget.
+**Default: refund unused child budget.** A refund emits a `refund_child` event whose `amount` records the dimensions returned to the parent. This default is part of the recursion contract — step authors are told their unused requests come back — and may not be silently disabled.
 
 ## 6. Charging rules
 

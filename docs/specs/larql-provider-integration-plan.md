@@ -183,15 +183,20 @@ Replace local budget dict mutation with ledger operations.
 Host functions:
 
 - `llm(prompt)` creates a `ModelRequest`, calls provider, charges usage, returns text.
-- `step(sub_input, request)` allocates child budget and recursively invokes Runner.
-- `ask_user(question)` remains unavailable or host-configured.
-- `budget()` returns a read-only snapshot.
+- `step(sub_input, request)` validates `request` (a `BudgetRequest` dict with `tokens`/`steps`/`depth`/`tool_calls`), charges one of the caller's `steps`, allocates the child budget, recursively invokes Runner, then refunds unused child budget to the caller.
+- `ask_user(question)` is host-configured and may be absent. When present, the host sets `context["ask_user_available"] = True` for the step. When absent, the name is not bound in the Monty namespace.
+- `budget()` returns a read-only snapshot with shape `{budget_id, tokens_remaining, steps_remaining, depth_remaining, tool_calls_remaining}`.
+
+Public entry point: `run_step(task, budget, provider, *, context=None, output_schema=None, ask_user=None) -> dict`. The returned dict matches the step output shape (3-arm `status`).
 
 Acceptance criteria:
 
-- Monty-visible API remains `llm`, `step`, `ask_user`, `budget`;
+- Monty-visible API is `llm`, `step`, `budget`, and conditionally `ask_user`;
 - recursive `step(...)` cannot exceed budget;
-- runner handles provider tool loops indirectly.
+- `step(...)` returns a 3-arm status dict (`complete` / `partial` / `error`); budget denial is observable to the step author as `status == "error"` with `error.code == "budget_denied"`;
+- unused child budget is auto-refunded and emits a `refund_child` ledger event;
+- runner handles provider tool loops indirectly;
+- `output_schema` validation is advisory: mismatches are logged, the step's return value is passed through unchanged.
 
 ### Phase 5: Tool registry and embedded Fleshwound tool
 

@@ -392,11 +392,17 @@ The `result` field must match the normal Fleshwound step output shape:
 
 ```python
 {
-    "status": "complete" | "partial",
-    "program": str,
+    "status": "complete" | "partial" | "error",
+    "program": str,            # may be "" when status == "error"
     "notes": str,
+    "error": {                 # required iff status == "error"
+        "code": str,
+        "message": str,
+    } | None,
 }
 ```
+
+The `error` arm carries failures that occurred inside the child step itself (e.g. a nested `budget_denied` the child chose to propagate, or a `monty_error` from the child's own generated code). It is distinct from the outer envelope's `status: "error"`, which carries failures of the tool-call dispatch (validation, allocation, spawn). When both arms are populated — outer envelope `status: "ok"` carrying an inner `result.status: "error"` — the call dispatched cleanly but the child reported failure.
 
 ### Budget denial
 
