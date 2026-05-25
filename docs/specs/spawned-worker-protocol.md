@@ -31,9 +31,14 @@ python -m fleshwound.workers.spawned_child
   "type": "fleshwound.spawned.run_step",
   "protocol_version": "fleshwound-larql/1",
   "request_id": "root.1.spawn.1",
-  "task": "Write only the parser component.",
-  "context": {},
-  "output_schema": null,
+  "input": {
+    "task": "Write only the parser component.",
+    "context": null,
+    "output_schema": null
+  },
+  "kind": "program_writer",
+  "default_policy": "same_as_parent",
+  "seed": 0,
   "budget": {
     "budget_id": "root.1",
     "parent_budget_id": "root",
@@ -60,9 +65,10 @@ Required fields:
 | `type` | yes | Must be `fleshwound.spawned.run_step`. |
 | `protocol_version` | yes | Must be `fleshwound-larql/1`. |
 | `request_id` | yes | Deterministic request ID. |
-| `task` | yes | Fleshwound task. |
-| `context` | yes | May be null. |
-| `output_schema` | yes | May be null. |
+| `input` | yes | Opaque JSON value handed to the step. The host does not inspect it; the shape is the selected `kind`'s convention. |
+| `kind` | yes | Catalog entry name. May be null only if `default_policy` can resolve without a parent. |
+| `default_policy` | yes | Default-resolution policy for any `step()` calls inside this run that omit `kind=`. |
+| `seed` | yes | Deterministic seed for any random default resolution. |
 | `budget` | yes | Child budget allocation. |
 | `provider` | yes | Provider configuration for the child. |
 
@@ -99,9 +105,14 @@ Larql CLI provider:
   "request_id": "root.1.spawn.1",
   "status": "ok",
   "result": {
-    "status": "complete",
-    "program": "...",
-    "notes": "..."
+    "outcome": "ok",
+    "value": {
+      "status": "complete",
+      "program": "...",
+      "notes": "...",
+      "error": null
+    },
+    "host_error": null
   },
   "budget": {
     "used": {

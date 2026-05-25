@@ -180,47 +180,53 @@ Modify `fleshwound/runner.py`.
 
 Replace local budget dict mutation with ledger operations.
 
-Host functions:
+Defer to [`recursion-contract.md`](recursion-contract.md) for the authoritative shapes; this section pins how the Runner satisfies that contract.
 
-- `llm(prompt)` creates a `ModelRequest`, calls provider, charges reported usage (including on failure), and **always returns a dict**: `{status: "ok"|"error", text: str, usage: {prompt_tokens, completion_tokens, total_tokens}, error: {code, message}|None}`.
-- `step(sub_input, request)` validates `sub_input` (`{task, context, output_schema}`) and `request` (a `BudgetRequest` dict with `tokens`/`steps`/`depth`/`tool_calls`), allocates the child budget from the parent's envelope, recursively invokes Runner, then refunds unused child budget to the parent — including on child failure. The embedded-vs-spawned execution choice is made by host policy, not by the step author; no `mode` parameter is exposed in the Monty surface.
-- `ask_user(question)` is host-configured and may be absent. When present, the host sets `context["ask_user_available"] = True` for the step. When absent, the name is not bound in the Monty namespace.
-- `budget()` returns a read-only snapshot with shape `{budget_id, tokens_remaining, steps_remaining, depth_remaining, tool_calls_remaining}`.
+Host functions exposed to Monty:
 
-Child steps inherit the parent's `provider`; there is no per-step provider override in the Monty surface.
+- `llm(prompt)` calls provider, charges reported usage (including on failure), and **always returns a dict**: `{status: "ok"|"error", text, usage, error}`.
+- `step(input, request, *, kind=None, default_policy=None, provider=None, ask_user=None)` validates `request` against the parent's envelope, opens a child budget, runs the child under the chosen catalog entry, refunds remaining child budget on close (regardless of outcome), and returns the host's wrapped envelope `{outcome, value, host_error}`. `input` is opaque to the host. The embedded-vs-spawned execution choice is a host policy decision; not exposed.
+- `ask_user(question)` bound only when the parent provided an `ask_user` callable.
+- `budget()` returns a read-only snapshot.
+
+Children inherit `provider`, `ask_user`, and `default_policy` from the parent unless explicitly overridden via the `step()` kwargs.
 
 Public entry point:
 
 ```python
 def run_step(
-    task: str,
-    budget: BudgetLimit,           # not BudgetRequest; root has no parent
+    input: Any,                              # opaque JSON value
+    budget: BudgetLimit,                     # not BudgetRequest; root has no parent
     provider: ModelProvider,
     *,
-    context: dict | None = None,
-    output_schema: dict | None = None,
+    kind: str | None = None,                 # required if default_policy cannot resolve at root
+    default_policy: DefaultPolicy = "same_as_parent",
+    seed: int,                               # required for deterministic randomness
     ask_user: Callable[[str], str] | None = None,
-) -> dict:
+) -> StepResult:                             # {outcome, value, host_error}
     ...
 ```
 
-The returned dict matches the step output shape (3-arm `status`, with the `error` arm populated iff `status == "error"`).
+Host safety nets (Runner is responsible for all):
 
-Host safety nets (the Runner is responsible for both):
-
-- Unhandled Python exceptions raised inside step code are caught and coerced into a `status: "error"`, `error.code: "monty_error"` result; a traceback summary is placed in `notes`. The exception does not propagate past the step boundary.
-- A malformed final expression (not a dict, missing `status`, status not in the enum) is coerced into the same `monty_error` result, with `repr(value)` in `notes`.
+- Unhandled Python exceptions inside step code → `{outcome: "host_error", value: None, host_error: {code: "monty_error", message: "<traceback summary>"}}`.
+- Malformed or missing final expression → same shape with `code: "malformed_result"`.
+- Unknown `kind` → `code: "unknown_kind"`.
+- Default policy that can't resolve (e.g. `same_as_parent` at the root with no `kind=`) → `code: "unresolvable_default"`.
+- Budget violation in a child `request` → `code: "budget_denied"`.
+- The host never raises across the step boundary; all failure surfaces are returned values.
 
 Acceptance criteria:
 
 - Monty-visible API is `llm`, `step`, `budget`, and conditionally `ask_user`;
 - `llm(...)` always returns a dict and never raises across the host boundary;
-- recursive `step(...)` cannot exceed budget;
-- `step(...)` returns a 3-arm status dict (`complete` / `partial` / `error`); budget denial is observable to the step author as `status == "error"` with `error.code == "budget_denied"`;
-- unused child budget is auto-refunded on **every** child close (complete, partial, or error) and emits a `refund_child` ledger event;
-- unhandled exceptions and malformed final expressions become `monty_error` results, not host crashes;
-- runner handles provider tool loops indirectly;
-- `output_schema` validation is advisory: mismatches are logged, the step's return value is passed through unchanged.
+- `step(...)` always returns a wrapped envelope and never raises across the host boundary;
+- `value` is passed through verbatim — the host does not inspect or validate it;
+- recursive `step(...)` cannot exceed budget; budget denial is observable as `outcome: "host_error"`, `host_error.code: "budget_denied"`;
+- unused child budget is auto-refunded on **every** child close and emits a `refund_child` ledger event;
+- `kind` selection routes to the named catalog entry; default-policy resolution is deterministic given `(seed, budget_id)`;
+- unhandled exceptions and malformed final expressions become `host_error` results, not host crashes;
+- runner handles provider tool loops indirectly.
 
 ### Phase 5: Tool registry and embedded Fleshwound tool
 

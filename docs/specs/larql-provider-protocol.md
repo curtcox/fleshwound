@@ -220,16 +220,11 @@ If validation fails, Fleshwound returns `budget_denied`.
       "input_schema": {
         "type": "object",
         "properties": {
-          "task": {"type": "string"},
-          "context": {"type": "object"},
-          "output_schema": {"type": "object"},
+          "input": {"description": "Opaque JSON value passed verbatim to the child step. Shape is defined by the selected catalog entry's convention."},
           "budget_request": {"type": "object"},
-          "mode": {
-            "type": "string",
-            "enum": ["embedded", "spawned"]
-          }
+          "kind": {"type": "string", "description": "Optional catalog entry name. If omitted, the active default-resolution policy applies."}
         },
-        "required": ["task", "budget_request"]
+        "required": ["input", "budget_request"]
       }
     }
   ],
@@ -287,14 +282,16 @@ Fleshwound charges `usage.total_tokens` to the active budget. The Monty-visible 
   "tool_call_id": "root.req.1.tool.1",
   "name": "fleshwound",
   "arguments": {
-    "task": "Write only the parser component.",
-    "context": {
-      "language": "rust",
-      "interface": "fn parse(input: &str) -> Result<Ast, ParseError>"
-    },
-    "output_schema": {
-      "type": "object",
-      "required": ["status", "program", "notes"]
+    "input": {
+      "task": "Write only the parser component.",
+      "context": {
+        "language": "rust",
+        "interface": "fn parse(input: &str) -> Result<Ast, ParseError>"
+      },
+      "output_schema": {
+        "type": "object",
+        "required": ["status", "program", "notes"]
+      }
     },
     "budget_request": {
       "tokens": 3000,
@@ -302,7 +299,7 @@ Fleshwound charges `usage.total_tokens` to the active budget. The Monty-visible 
       "depth": 1,
       "tool_calls": 1
     },
-    "mode": "embedded"
+    "kind": "program_writer"
   },
   "usage": {
     "prompt_tokens": 1200,
@@ -324,30 +321,18 @@ Fleshwound must:
 
 ```json
 {
-  "task": "string",
-  "context": "object|null",
-  "output_schema": "object|null",
+  "input": "<any JSON value>",
   "budget_request": {
     "tokens": "integer",
     "steps": "integer",
     "depth": "integer",
     "tool_calls": "integer"
   },
-  "mode": "embedded|spawned"
+  "kind": "string|null"
 }
 ```
 
-Allowed defaults:
-
-```json
-{
-  "context": null,
-  "output_schema": null,
-  "mode": "embedded"
-}
-```
-
-`budget_request` must be explicit.
+`input` is opaque to Fleshwound's transport layer; its shape is dictated by the catalog entry named in `kind`. `budget_request` must be explicit. If `kind` is omitted or null, the host applies the active default-resolution policy (see `recursion-contract.md` §6.3); embedded-vs-spawned execution is a host policy decision, not a tool-call argument.
 
 ## 9. Fleshwound tool result
 
@@ -360,9 +345,14 @@ Allowed defaults:
   "tool_call_id": "root.req.1.tool.1",
   "status": "ok",
   "result": {
-    "status": "complete",
-    "program": "fn parse(...) { ... }",
-    "notes": "Implements recursive descent parser."
+    "outcome": "ok",
+    "value": {
+      "status": "complete",
+      "program": "fn parse(...) { ... }",
+      "notes": "Implements recursive descent parser.",
+      "error": null
+    },
+    "host_error": null
   },
   "budget": {
     "budget_id": "root.1",
@@ -388,21 +378,23 @@ Allowed defaults:
 }
 ```
 
-The `result` field must match the normal Fleshwound step output shape:
+The `result` field is the host's wrapped step envelope (see `recursion-contract.md` §4):
 
 ```python
 {
-    "status": "complete" | "partial" | "error",
-    "program": str,            # may be "" when status == "error"
-    "notes": str,
-    "error": {                 # required iff status == "error"
-        "code": str,
-        "message": str,
-    } | None,
+    "outcome": "ok" | "host_error",
+    "value": Any,                                          # opaque; defined by the kind's convention
+    "host_error": {"code": str, "message": str} | None,
 }
 ```
 
-The `error` arm carries failures that occurred inside the child step itself (e.g. a nested `budget_denied` the child chose to propagate, or a `monty_error` from the child's own generated code). It is distinct from the outer envelope's `status: "error"`, which carries failures of the tool-call dispatch (validation, allocation, spawn). When both arms are populated — outer envelope `status: "ok"` carrying an inner `result.status: "error"` — the call dispatched cleanly but the child reported failure.
+The transport carries this verbatim. The outer envelope's `status` field (`"ok"` vs `"error"`) reflects the *tool-call dispatch* — whether the call was validly issued, the child allocated, and the response returned. The inner envelope's `outcome` reflects whether the *child step itself* ran to completion. Both can be populated independently:
+
+| Outer `status` | Inner `outcome` | Meaning |
+|---|---|---|
+| `"ok"` | `"ok"` | Call dispatched, child completed. `value` is the child's value. |
+| `"ok"` | `"host_error"` | Call dispatched, child could not complete. `host_error` carries the reason. |
+| `"error"` | — | Call did not dispatch (validation, allocation, spawn failed). No inner envelope. |
 
 ### Budget denial
 
