@@ -26,6 +26,17 @@ def test_parse_rlm_action_accepts_fenced_json():
     assert action["action"] == "answer"
 
 
+def test_parse_rlm_action_uses_first_action_shaped_json_object():
+    action, error = _parse_rlm_action(
+        'metadata: {"ignored": true}\n'
+        'action: {"protocol":"fleshwound-rlm-action/1","action":"answer","value":"ok"}'
+    )
+
+    assert error is None
+    assert action is not None
+    assert action["action"] == "answer"
+
+
 def test_validate_rlm_action_rejects_unknown_action():
     error = _validate_rlm_action({"protocol": "fleshwound-rlm-action/1", "action": "delete_everything"})
 

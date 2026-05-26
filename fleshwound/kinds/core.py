@@ -52,13 +52,18 @@ def _json_object_candidates(text: str) -> list[str]:
 
 
 def _parse_rlm_action(text: str) -> tuple[dict[str, Any] | None, str | None]:
+    first_object: dict[str, Any] | None = None
     for candidate in _json_object_candidates(text):
         try:
             parsed = json.loads(candidate)
         except json.JSONDecodeError:
             continue
         if isinstance(parsed, dict):
-            return parsed, None
+            first_object = first_object or parsed
+            if "action" in parsed:
+                return parsed, None
+    if first_object is not None:
+        return first_object, None
     return None, "model output did not contain a valid JSON object action"
 
 
