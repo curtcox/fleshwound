@@ -1,0 +1,40 @@
+{
+  "hash": "7d2ea883ad3fcc0aa32bcb3ba09a75bf4de3a99d7c6b60d347894f2b2737bc12",
+  "input": {
+    "max_iterations": 1,
+    "task": "return ok"
+  },
+  "value_sample": {
+    "answer": null,
+    "iterations": 1,
+    "notes": "max_iterations reached",
+    "state": {
+      "context": {},
+      "task": "return ok",
+      "trace": [
+        {
+          "action": {},
+          "iteration": 1,
+          "model_text": "{}",
+          "observation": {
+            "message": "unknown action: None",
+            "type": "validation_error"
+          }
+        }
+      ],
+      "vars": {}
+    },
+    "status": "partial",
+    "trace": [
+      {
+        "action": {},
+        "iteration": 1,
+        "model_text": "{}",
+        "observation": {
+          "message": "unknown action: None",
+          "type": "validation_error"
+        }
+      }
+    ]
+  }
+}

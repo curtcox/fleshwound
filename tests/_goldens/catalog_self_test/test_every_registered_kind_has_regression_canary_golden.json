@@ -1,5 +1,5 @@
 {
-  "hash": "c3657409775526af3fb914d2188cad469a522713e24500522035f80af817ee13",
+  "hash": "87c479f68235b440c87d31443a16ba8cdb701df071c59bb950c9d0dc10a4b995",
   "input": {},
   "value_sample": {
     "results": [
@@ -359,6 +359,13 @@
         "expected_host_error": false,
         "host_error": null,
         "kind": "retry_wrapper",
+        "outcome": "ok",
+        "unexpected_host_error": false
+      },
+      {
+        "expected_host_error": false,
+        "host_error": null,
+        "kind": "rlm_loop",
         "outcome": "ok",
         "unexpected_host_error": false
       },

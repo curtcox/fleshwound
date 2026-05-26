@@ -1,5 +1,5 @@
 {
-  "hash": "ac318bfd64232ada4f0f3af72c76e55f3e14c45ccd8bc65b11f2411b9ea9b983",
+  "hash": "b3991cf4cfe55cb9f2f0088e7a0302371e738f6b8d761526caae9144bf86c73c",
   "input": {},
   "value_sample": {
     "kinds": [
@@ -206,6 +206,10 @@
       {
         "convention": "retry inner_kind until ok or max_attempts",
         "name": "retry_wrapper"
+      },
+      {
+        "convention": "task/context -> answer via structured iterative llm+step recursion",
+        "name": "rlm_loop"
       },
       {
         "convention": "LLM-backed structured kind rubric_grader",
