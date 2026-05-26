@@ -36,7 +36,7 @@ def _is_jsonable(value: Any) -> bool:
 
 
 def _json_object_candidates(text: str) -> list[str]:
-    fenced = re.findall(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.S)
+    fenced = re.findall(r"```(?:json)?\s*(.*?)\s*```", text, re.S)
     if fenced:
         return fenced
 
@@ -69,6 +69,13 @@ def _parse_rlm_action(text: str) -> tuple[dict[str, Any] | None, str | None]:
 
 def _strict_rlm_text_error(text: str) -> str | None:
     stripped = text.strip()
+    for candidate in re.findall(r"```(?:json)?\s*(.*?)\s*```", text, re.S):
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict) and "action" in parsed:
+            return None
     if stripped.startswith("```"):
         return None
     try:

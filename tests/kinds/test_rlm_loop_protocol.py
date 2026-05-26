@@ -26,6 +26,15 @@ def test_parse_rlm_action_accepts_fenced_json():
     assert action["action"] == "answer"
 
 
+def test_parse_rlm_action_accepts_fenced_json_with_nested_value():
+    action, error = _parse_rlm_action(
+        '```json\n{"protocol":"fleshwound-rlm-action/1","action":"answer","value":{"ok":true}}\n```'
+    )
+
+    assert error is None
+    assert action == {"protocol": "fleshwound-rlm-action/1", "action": "answer", "value": {"ok": True}}
+
+
 def test_parse_rlm_action_uses_first_action_shaped_json_object():
     action, error = _parse_rlm_action(
         'metadata: {"ignored": true}\n'
@@ -108,6 +117,24 @@ def test_rlm_loop_strict_mode_rejects_prose_wrapped_json():
 
     assert value["status"] == "partial"
     assert value["trace"][0]["observation"]["type"] == "parse_error"
+
+
+def test_rlm_loop_strict_mode_accepts_prose_wrapped_fenced_json():
+    fake = FakeProvider(
+        {
+            r"iteration 1": text_result(
+                'Here is the action:\n'
+                '```json\n{"protocol":"fleshwound-rlm-action/1","action":"answer","value":"ok"}\n```'
+            )
+        }
+    )
+
+    value = assert_ok(
+        run_step({"task": "strict fenced prose", "max_iterations": 1, "strict_protocol": True}, provider=fake, kind="rlm_loop")
+    )
+
+    assert value["status"] == "complete"
+    assert value["answer"] == "ok"
 
 
 def test_rlm_loop_rejects_explicit_over_budget_child_request():
