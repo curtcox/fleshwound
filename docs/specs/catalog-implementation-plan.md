@@ -109,6 +109,8 @@ Each phase is **red → green → refactor**. A phase is complete when its exit 
 - Phase 12: complete. Group H structured-data tests cover `function_map_writer`, `function_map_editor`, `schema_designer`, `ast_transform`, `diff_writer`, and `patch_set_writer`, including data-dependent fan-out, model usage charging, fallback paths, and determinism.
 - Phase 13: complete. Group I filesystem-shaped pure-data tests cover `directory_input`, `directory_writer`, `repo_walker`, and `patch_applier_proxy`, including virtual-tree delegation, predicate filtering, large fan-out `budget_denied`, pure-data patch rejection, fallback paths, and determinism.
 - Phase 14: complete. Group J/K/L tests cover `refine_until`, `conversation`, `tournament`, `pipeline`, `transformer`, `precondition_gate`, `kind_lister`, `kind_chooser`, and `catalog_self_test`, including loop fan-out, no-hidden-state conversation inputs, precondition short-circuiting, catalog-grounded chooser prompts, full-catalog self-test canary behavior, failure paths, and determinism.
+- Phase 15: complete. Group N/O/P tests cover `rubric_grader`, `pairwise_preference`, `calibration`, `score_aggregator`, `attack_generator`, `adversarial_loop`, `failure_classifier`, `regression_canary`, `convention_adapter`, `chain_with_adapter`, `content_hash_memo`, and `dedup_then_map`, including scoring shapes, adversarial success recording, explicit memo-hit behavior, adapter composition, fan-out, and determinism.
+- Phase 16: complete. `test_contract_invariants` sweeps the whole registered catalog for JSON-serializable minimal results, host step charging, host-error fixture completeness, and full `catalog_self_test` coverage without unexpected host errors.
 
 ### Phase 0 — Test harness
 
