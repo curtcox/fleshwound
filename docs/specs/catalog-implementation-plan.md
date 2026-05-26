@@ -102,6 +102,12 @@ Goldens live at `tests/_goldens/<kind>/<test_name>.json` as `{"hash": "...", "in
 
 Each phase is **red → green → refactor**. A phase is complete when its exit criterion holds with no skipped tests.
 
+## Progress
+
+- Phases 0-10: implemented before this checkpoint; covered by existing harness, ledger, runner, provider, Monty, Group A-F tests.
+- Phase 11: complete. Group G dynamic-dispatch tests cover `dynamic_dispatch`, `cond_dispatch`, `cascade`, and `meta_planner`, including runtime-computed `kind=`, `ctx.catalog` usage, budget event visibility, failure paths, and determinism.
+- Phase 12: complete. Group H structured-data tests cover `function_map_writer`, `function_map_editor`, `schema_designer`, `ast_transform`, `diff_writer`, and `patch_set_writer`, including data-dependent fan-out, model usage charging, fallback paths, and determinism.
+
 ### Phase 0 — Test harness
 
 Build the harness used by every later phase. No production code.

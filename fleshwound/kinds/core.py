@@ -258,12 +258,16 @@ def cond_dispatch(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
 @register("cascade", convention="try kinds in order until one succeeds")
 def cascade(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
     tried = []
+    result = None
+    stop_predicate = input.get("stop_predicate")
     for kind in input.get("kinds", []):
         tried.append(kind)
         result = ctx.step(input.get("inner_input"), _request(ctx, len(input.get("kinds", [])) or 1), kind=kind)
-        if result["outcome"] == "ok":
+        if result["outcome"] != "ok":
+            continue
+        if not stop_predicate or _monty_run(str(stop_predicate), result.get("value"), ctx):
             return {"chosen_kind": kind, "result": result, "tried": tried}
-    return {"chosen_kind": None, "result": result if tried else None, "tried": tried}
+    return {"chosen_kind": None, "result": result, "tried": tried}
 
 
 @register("kind_lister", convention="{} -> catalog names and conventions")
