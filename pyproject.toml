@@ -16,3 +16,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["fleshwound*"]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: exercises the full runner path with real integration boundaries",
+]
