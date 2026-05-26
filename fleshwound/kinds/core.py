@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ..catalog import register
+from ..errors import HostError
 
 
 def _request(ctx: Any, parts: int = 1) -> dict[str, int]:
@@ -192,14 +193,17 @@ def always_host_error(input: dict[str, Any], ctx: Any) -> Any:
     code = input.get("code")
     if code == "malformed_result":
         return object()
-    if code == "budget_denied":
-        return ctx.step({}, {"tokens": 10**9, "steps": 1, "depth": 1, "tool_calls": 0}, kind="echo")
-    if code == "unknown_kind":
-        return ctx.step({}, _request(ctx), kind="definitely_missing_kind")
-    if code == "unresolvable_default":
-        return ctx.step({}, _request(ctx), kind=None, default_policy={"random_from_subset": []})
-    if code == "monty_error":
-        return _monty_run('raise Exception("forced monty error")', input, ctx)
+    if code in {
+        "budget_exhausted",
+        "budget_denied",
+        "monty_error",
+        "spawn_failed",
+        "spawn_protocol_error",
+        "unknown_kind",
+        "unresolvable_default",
+        "executor_error",
+    }:
+        raise HostError(code, f"forced {code}")
     raise RuntimeError(f"forced {code or 'executor_error'}")
 
 

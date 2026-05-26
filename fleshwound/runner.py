@@ -13,6 +13,7 @@ from typing import Any, Callable
 from .budget import BudgetLedger, BudgetLimit
 from .catalog import Catalog, UnknownKind, catalog as default_catalog
 from .context import RunContext
+from .errors import HostError
 from .provider import CallableProvider, ModelProvider, Usage
 
 import fleshwound.kinds  # noqa: F401  side-effect: register built-ins
@@ -276,6 +277,8 @@ def _run_allocated_step(
     )
     try:
         value = entry.executor(input, ctx)
+    except HostError as exc:
+        return host_error(exc.code, exc.message)
     except Exception as exc:
         message = "".join(traceback.format_exception_only(type(exc), exc)).strip()
         return host_error("monty_error" if entry.monty else "executor_error", message)
