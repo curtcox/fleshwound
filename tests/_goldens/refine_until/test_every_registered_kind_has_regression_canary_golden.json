@@ -1,0 +1,16 @@
+{
+  "hash": "3e7ce73d99a10c03de7e848ec47a8872e576e07ad2b58ccf20a2e5b78ff451a2",
+  "input": {
+    "inner_input": {
+      "value": "ok"
+    },
+    "inner_kind": "constant",
+    "judge_kind": "judge",
+    "max_rounds": 0
+  },
+  "value_sample": {
+    "final": null,
+    "history": [],
+    "rounds": 0
+  }
+}

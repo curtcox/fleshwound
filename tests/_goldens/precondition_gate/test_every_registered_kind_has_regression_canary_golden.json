@@ -1,0 +1,12 @@
+{
+  "hash": "169ab188801a0e4ed4e76c887cc64595459cf589bfa3282afe22997491d3a3a6",
+  "input": {
+    "inner_input": {},
+    "inner_kind": "echo",
+    "predicate": "False"
+  },
+  "value_sample": {
+    "gated": true,
+    "reason": "predicate false"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "hash": "d124078c2f513d2106a8b57b38f1c4db709c47d8a400d9f8c6cf0f042e2eae9f",
+  "input": {
+    "inner_input": {
+      "context": null,
+      "task": "draft"
+    },
+    "inner_kind": "prose_writer",
+    "inner_provider": "<fleshwound.provider.CallableProvider object at 0x107111900>"
+  },
+  "value_sample": {
+    "result": {
+      "host_error": null,
+      "outcome": "ok",
+      "value": {
+        "notes": "",
+        "text": "child text"
+      }
+    }
+  }
+}

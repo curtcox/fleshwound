@@ -1,0 +1,13 @@
+{
+  "hash": "181e2a7c4c92064946dc9b116b45d6c220760fcd381064cef3f498ca2ac5066b",
+  "input": {
+    "items": [],
+    "map_kind": "echo",
+    "reduce_kind": null
+  },
+  "value_sample": {
+    "errors": [],
+    "mapped": [],
+    "reduced": null
+  }
+}

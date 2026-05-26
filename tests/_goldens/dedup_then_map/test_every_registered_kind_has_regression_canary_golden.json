@@ -1,0 +1,11 @@
+{
+  "hash": "4c2f9eaa668cf14ab4f1be93bf993152df1c4157826bddac25b8b94429230874",
+  "input": {
+    "inner_kind": "echo",
+    "items": []
+  },
+  "value_sample": {
+    "items_to_hash": [],
+    "results_by_hash": {}
+  }
+}

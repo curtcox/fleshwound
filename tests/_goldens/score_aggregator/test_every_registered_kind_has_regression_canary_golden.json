@@ -1,0 +1,11 @@
+{
+  "hash": "11866fb873f9f7d4607204cec7d76a27a1a97cd1b1fc90c5c34bcced6ee5ad5f",
+  "input": {
+    "policy": "weighted_mean",
+    "scores": []
+  },
+  "value_sample": {
+    "aggregate": 0.0,
+    "n": 0
+  }
+}

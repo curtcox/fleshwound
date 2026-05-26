@@ -1,0 +1,14 @@
+{
+  "hash": "c8f2995958ca8a80556d61585c747f36bdf3184e5e77a06e7356c1e3bca46cc1",
+  "input": {
+    "inner_input_template": {
+      "value": 1
+    },
+    "inner_kind": "constant"
+  },
+  "value_sample": {
+    "host_error": null,
+    "outcome": "ok",
+    "value": 1
+  }
+}

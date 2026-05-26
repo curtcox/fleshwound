@@ -1,0 +1,25 @@
+{
+  "hash": "af9568e25a6ecd9d7b488c5931713a785faa55fafd4cc2acb0922b0ab2073d30",
+  "input": {
+    "current": {
+      "a": {
+        "source": "old"
+      }
+    },
+    "edits": [
+      {
+        "instruction": "new",
+        "name": "a"
+      }
+    ]
+  },
+  "value_sample": {
+    "added": [],
+    "removed": [],
+    "updated": {
+      "a": {
+        "source": "new"
+      }
+    }
+  }
+}

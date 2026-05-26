@@ -1,0 +1,19 @@
+{
+  "hash": "2c87dc8765c718b76b6a96bc95c769963a0caeace4a5ac496ea573885e2ce2a3",
+  "input": {
+    "expected_value_hash": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+    "frozen_input": {
+      "value": 1
+    },
+    "frozen_kind": "constant"
+  },
+  "value_sample": {
+    "actual_hash": "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b",
+    "passed": true,
+    "result": {
+      "host_error": null,
+      "outcome": "ok",
+      "value": 1
+    }
+  }
+}

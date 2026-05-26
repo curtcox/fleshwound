@@ -1,0 +1,11 @@
+{
+  "hash": "82747f46addca5278ad408c509ef1b30bc4c2601189649c564928391bf1b1cda",
+  "input": {
+    "code": "{'x': input['x'], 'twice': input['x'] * 2}",
+    "x": 7
+  },
+  "value_sample": {
+    "twice": 14,
+    "x": 7
+  }
+}

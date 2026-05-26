@@ -1,0 +1,56 @@
+{
+  "hash": "db6b96370a8ead1ff94a314298b38ef35b7a4427fdf2c9e89a8ab61250de6bef",
+  "input": {},
+  "value_sample": {
+    "result": {
+      "host_error": null,
+      "outcome": "ok",
+      "value": {
+        "result": {
+          "host_error": null,
+          "outcome": "ok",
+          "value": {
+            "result": {
+              "host_error": null,
+              "outcome": "ok",
+              "value": {
+                "result": {
+                  "host_error": null,
+                  "outcome": "ok",
+                  "value": {
+                    "result": {
+                      "host_error": null,
+                      "outcome": "ok",
+                      "value": {
+                        "result": {
+                          "host_error": null,
+                          "outcome": "ok",
+                          "value": {
+                            "result": {
+                              "host_error": null,
+                              "outcome": "ok",
+                              "value": {
+                                "result": {
+                                  "host_error": {
+                                    "code": "budget_denied",
+                                    "message": "Requested child budget exceeds remaining parent budget."
+                                  },
+                                  "outcome": "host_error",
+                                  "value": null
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

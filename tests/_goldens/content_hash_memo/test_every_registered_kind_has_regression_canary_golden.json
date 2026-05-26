@@ -1,0 +1,18 @@
+{
+  "hash": "664c996ecb230da6f11c0cb91c716843244a51695e1df93623e1d614eb224ce3",
+  "input": {
+    "inner_input": {
+      "value": 1
+    },
+    "inner_kind": "constant",
+    "memo": {}
+  },
+  "value_sample": {
+    "hash": "7b276c1d2be49934ade4dc5faf2c636bce8b9cf567ffa3bc8a4a70246a5b9f73",
+    "hit": false,
+    "memo": {
+      "7b276c1d2be49934ade4dc5faf2c636bce8b9cf567ffa3bc8a4a70246a5b9f73": 1
+    },
+    "value": 1
+  }
+}

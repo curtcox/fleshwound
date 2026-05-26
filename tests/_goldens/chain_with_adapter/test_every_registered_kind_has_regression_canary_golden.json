@@ -1,0 +1,30 @@
+{
+  "hash": "29ec3fdbec796a43e71b2b84b610b3001a28dbbf2e78ed167d99cc2a7a7f9e54",
+  "input": {
+    "first_input": {
+      "value": {
+        "value": 1
+      }
+    },
+    "first_kind": "constant",
+    "second_kind": "constant"
+  },
+  "value_sample": {
+    "adapted_input": null,
+    "first_result": {
+      "host_error": null,
+      "outcome": "ok",
+      "value": {
+        "value": 1
+      }
+    },
+    "second_result": {
+      "host_error": {
+        "code": "executor_error",
+        "message": "TypeError: 'NoneType' object is not subscriptable"
+      },
+      "outcome": "host_error",
+      "value": null
+    }
+  }
+}

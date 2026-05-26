@@ -1,0 +1,14 @@
+{
+  "hash": "753573a7189242878604fdeb4cf9d7406ff5d0b87acd47625b963daa431f2bd9",
+  "input": {
+    "labels": [
+      "a"
+    ],
+    "text": "a"
+  },
+  "value_sample": {
+    "confidence": null,
+    "label": "a",
+    "rationale": "{}"
+  }
+}

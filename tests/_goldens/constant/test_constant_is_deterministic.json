@@ -1,0 +1,19 @@
+{
+  "hash": "3bb60d6e8a54ad03851105049b3dd9de8d917ea201fcdc0f54ee5899b2e44176",
+  "input": {
+    "value": {
+      "a": [
+        1,
+        2
+      ],
+      "b": "c"
+    }
+  },
+  "value_sample": {
+    "a": [
+      1,
+      2
+    ],
+    "b": "c"
+  }
+}

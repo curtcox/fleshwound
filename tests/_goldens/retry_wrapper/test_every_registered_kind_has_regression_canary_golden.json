@@ -1,0 +1,18 @@
+{
+  "hash": "94030cf3b32e44f3e0b1b5d670d8bbc5f431e61e20a2788a9d253556976a5e1c",
+  "input": {
+    "inner_input": {
+      "value": 1
+    },
+    "inner_kind": "constant",
+    "max_attempts": 1
+  },
+  "value_sample": {
+    "attempts": 1,
+    "result": {
+      "host_error": null,
+      "outcome": "ok",
+      "value": 1
+    }
+  }
+}

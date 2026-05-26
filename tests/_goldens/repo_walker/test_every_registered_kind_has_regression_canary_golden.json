@@ -1,0 +1,11 @@
+{
+  "hash": "65774d419a9c4e752e9080d5ecebf42761fc4179238399313bf4ca4093368016",
+  "input": {
+    "per_file_kind": "echo",
+    "predicate": "True",
+    "tree": {}
+  },
+  "value_sample": {
+    "per_file": {}
+  }
+}

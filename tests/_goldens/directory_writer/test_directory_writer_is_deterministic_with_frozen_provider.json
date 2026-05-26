@@ -1,0 +1,16 @@
+{
+  "hash": "9f5fd8231c229f93db4455178412a697bf0c8ba52c3e817c6543b6a7ad7ccb7f",
+  "input": {
+    "shape": "tree",
+    "task": "Create a small package"
+  },
+  "value_sample": {
+    "notes": "one file",
+    "tree": {
+      "README.md": {
+        "content": "# Demo",
+        "mode": "0644"
+      }
+    }
+  }
+}

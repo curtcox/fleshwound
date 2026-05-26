@@ -1,0 +1,12 @@
+{
+  "hash": "10bb0755cd6fc0d76fbad404e0aae8199f2273cb59ed554bd751a82bb91469f5",
+  "input": {
+    "depth": 0,
+    "task": "x"
+  },
+  "value_sample": {
+    "trace": [
+      "inherit_chain"
+    ]
+  }
+}

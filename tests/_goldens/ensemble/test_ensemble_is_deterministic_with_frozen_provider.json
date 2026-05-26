@@ -1,0 +1,18 @@
+{
+  "hash": "04b5b9adbf3dafee710d562ea7de07f3cfda66070c967d52d8d645119ea52748",
+  "input": {
+    "aggregator_prompt": "Pick",
+    "inner_input": {
+      "value": "x"
+    },
+    "inner_kind": "constant",
+    "n": 2
+  },
+  "value_sample": {
+    "candidates": [
+      "x",
+      "x"
+    ],
+    "chosen": "x"
+  }
+}

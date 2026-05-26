@@ -1,0 +1,18 @@
+{
+  "hash": "47e487b30d924a18c2362585256df108b9734fddece9b41c58b75df230483833",
+  "input": {
+    "inner_input": {
+      "value": "x"
+    },
+    "subset": [
+      "constant"
+    ]
+  },
+  "value_sample": {
+    "result": {
+      "host_error": null,
+      "outcome": "ok",
+      "value": "x"
+    }
+  }
+}

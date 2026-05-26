@@ -1,0 +1,11 @@
+{
+  "hash": "8d87c143fd46c0bdbe6358d981050ef2d7fd827cc0a0fdf28e66010f40a44f1a",
+  "input": {
+    "candidate": "x",
+    "criteria": "ok"
+  },
+  "value_sample": {
+    "rationale": "{}",
+    "verdict": "fail"
+  }
+}

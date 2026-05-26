@@ -1,0 +1,23 @@
+{
+  "hash": "789b905db084c4c218a33ad3011828d36c8629ab5ec8bd173bcb161d9be36dd0",
+  "input": {
+    "task": "produce x"
+  },
+  "value_sample": {
+    "plan": [
+      {
+        "input": {
+          "value": "x"
+        },
+        "kind": "constant"
+      }
+    ],
+    "results": [
+      {
+        "host_error": null,
+        "outcome": "ok",
+        "value": "x"
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "hash": "5251e31e575b75a5c8b68263b6d583762e0e393a2e15428d467e5d115436cab2",
+  "input": {
+    "candidates": [],
+    "judge_kind": "pairwise_preference"
+  },
+  "value_sample": {
+    "bracket": [],
+    "winner": null
+  }
+}

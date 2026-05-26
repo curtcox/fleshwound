@@ -1,0 +1,12 @@
+{
+  "hash": "aea95fb8f3c13ab1c096ab602b971b29f719012dc9bdaa18f8b99102f82a391d",
+  "input": {
+    "task": "return empty",
+    "tree": {}
+  },
+  "value_sample": {
+    "host_error": null,
+    "outcome": "ok",
+    "value": {}
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "hash": "21564d72b7d7b562329b387db9e6b40d37825478e4b7f4036e9af6653c6fec59",
+  "input": {
+    "target": "steps"
+  },
+  "value_sample": {
+    "result": {
+      "host_error": {
+        "code": "budget_denied",
+        "message": "Requested child budget exceeds remaining parent budget."
+      },
+      "outcome": "host_error",
+      "value": null
+    },
+    "target": "steps"
+  }
+}

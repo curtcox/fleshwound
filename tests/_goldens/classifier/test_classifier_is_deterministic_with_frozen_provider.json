@@ -1,0 +1,15 @@
+{
+  "hash": "28cbc8b56dbf5ffc257c6f73e9ec7c2cd0495603254c39c84bd86738bfdc189d",
+  "input": {
+    "labels": [
+      "approve",
+      "reject"
+    ],
+    "text": "ship it"
+  },
+  "value_sample": {
+    "confidence": null,
+    "label": "approve",
+    "rationale": "approve"
+  }
+}

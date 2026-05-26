@@ -1,0 +1,236 @@
+{
+  "hash": "ac318bfd64232ada4f0f3af72c76e55f3e14c45ccd8bc65b11f2411b9ea9b983",
+  "input": {},
+  "value_sample": {
+    "kinds": [
+      {
+        "convention": "attack target repeatedly",
+        "name": "adversarial_loop"
+      },
+      {
+        "convention": "input.code triggers one host_error code",
+        "name": "always_host_error"
+      },
+      {
+        "convention": "returns a deliberate partial value",
+        "name": "always_partial"
+      },
+      {
+        "convention": "question -> {'answer'} or unavailable note",
+        "name": "ask_user_only"
+      },
+      {
+        "convention": "return transformed AST data",
+        "name": "ast_transform"
+      },
+      {
+        "convention": "LLM-backed structured kind attack_generator",
+        "name": "attack_generator"
+      },
+      {
+        "convention": "burns target budget and observes exhaustion",
+        "name": "budget_hog"
+      },
+      {
+        "convention": "compare grader outputs to gold scores",
+        "name": "calibration"
+      },
+      {
+        "convention": "try kinds in order until one succeeds",
+        "name": "cascade"
+      },
+      {
+        "convention": "run minimal inputs for listed kinds",
+        "name": "catalog_self_test"
+      },
+      {
+        "convention": "first -> adapter -> second",
+        "name": "chain_with_adapter"
+      },
+      {
+        "convention": "optionally ask then delegate",
+        "name": "clarify_then_delegate"
+      },
+      {
+        "convention": "text/labels -> label/confidence/rationale using ctx.llm",
+        "name": "classifier"
+      },
+      {
+        "convention": "first true Monty predicate dispatches",
+        "name": "cond_dispatch"
+      },
+      {
+        "convention": "input.value -> value verbatim; host charges one step",
+        "name": "constant"
+      },
+      {
+        "convention": "explicit input/output memoization",
+        "name": "content_hash_memo"
+      },
+      {
+        "convention": "LLM-backed structured kind convention_adapter",
+        "name": "convention_adapter"
+      },
+      {
+        "convention": "LLM-backed structured kind conversation",
+        "name": "conversation"
+      },
+      {
+        "convention": "run inner_kind once per unique item hash",
+        "name": "dedup_then_map"
+      },
+      {
+        "convention": "LLM-backed structured kind diff_writer",
+        "name": "diff_writer"
+      },
+      {
+        "convention": "delegate virtual tree task to program_writer",
+        "name": "directory_input"
+      },
+      {
+        "convention": "LLM-backed structured kind directory_writer",
+        "name": "directory_writer"
+      },
+      {
+        "convention": "choose kind literally or by llm then delegate",
+        "name": "dynamic_dispatch"
+      },
+      {
+        "convention": "input -> input verbatim; host charges one step",
+        "name": "echo"
+      },
+      {
+        "convention": "run inner_kind n times and aggregate with llm",
+        "name": "ensemble"
+      },
+      {
+        "convention": "LLM-backed structured kind failure_classifier",
+        "name": "failure_classifier"
+      },
+      {
+        "convention": "edit function map data",
+        "name": "function_map_editor"
+      },
+      {
+        "convention": "write functions for signatures",
+        "name": "function_map_writer"
+      },
+      {
+        "convention": "descends until child allocation is denied",
+        "name": "infinite_descent"
+      },
+      {
+        "convention": "recursively calls same kind until depth expires",
+        "name": "inherit_chain"
+      },
+      {
+        "convention": "candidate/criteria -> pass/fail/rationale",
+        "name": "judge"
+      },
+      {
+        "convention": "task -> chosen_kind/rationale using catalog-grounded llm",
+        "name": "kind_chooser"
+      },
+      {
+        "convention": "{} -> catalog names and conventions",
+        "name": "kind_lister"
+      },
+      {
+        "convention": "map items through map_kind; optional reduce_kind",
+        "name": "map_reduce"
+      },
+      {
+        "convention": "LLM JSON plan then sequential execution",
+        "name": "meta_planner"
+      },
+      {
+        "convention": "code -> final Monty expression",
+        "name": "monty_exec"
+      },
+      {
+        "convention": "always raises a host-Python exception",
+        "name": "noop_fail"
+      },
+      {
+        "convention": "always raises inside Monty",
+        "name": "noop_fail_monty"
+      },
+      {
+        "convention": "LLM-backed structured kind pairwise_preference",
+        "name": "pairwise_preference"
+      },
+      {
+        "convention": "pure-data patch apply simulation",
+        "name": "patch_applier_proxy"
+      },
+      {
+        "convention": "LLM-backed structured kind patch_set_writer",
+        "name": "patch_set_writer"
+      },
+      {
+        "convention": "sequential stage composition",
+        "name": "pipeline"
+      },
+      {
+        "convention": "predicate-gated delegation",
+        "name": "precondition_gate"
+      },
+      {
+        "convention": "task/context/output_schema -> status/program/notes",
+        "name": "program_writer"
+      },
+      {
+        "convention": "task/context -> {'text', 'notes'} using ctx.llm",
+        "name": "prose_writer"
+      },
+      {
+        "convention": "delegates with supplied provider object if present",
+        "name": "provider_swap"
+      },
+      {
+        "convention": "delegate using random default policy",
+        "name": "random_pick"
+      },
+      {
+        "convention": "iterative refine/judge loop",
+        "name": "refine_until"
+      },
+      {
+        "convention": "hash child value and compare to expected",
+        "name": "regression_canary"
+      },
+      {
+        "convention": "run per_file_kind for matching virtual files",
+        "name": "repo_walker"
+      },
+      {
+        "convention": "retry inner_kind until ok or max_attempts",
+        "name": "retry_wrapper"
+      },
+      {
+        "convention": "LLM-backed structured kind rubric_grader",
+        "name": "rubric_grader"
+      },
+      {
+        "convention": "LLM-backed structured kind schema_designer",
+        "name": "schema_designer"
+      },
+      {
+        "convention": "aggregate scores by weighted_mean, median, or min",
+        "name": "score_aggregator"
+      },
+      {
+        "convention": "delegate using random_from_subset default policy",
+        "name": "subset_pick"
+      },
+      {
+        "convention": "pairwise preference bracket",
+        "name": "tournament"
+      },
+      {
+        "convention": "preprocess/delegate/postprocess wrapper",
+        "name": "transformer"
+      }
+    ]
+  }
+}

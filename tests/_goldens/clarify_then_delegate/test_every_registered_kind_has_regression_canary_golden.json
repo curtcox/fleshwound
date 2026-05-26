@@ -1,0 +1,19 @@
+{
+  "hash": "cbd90d412b261657900cb939b13311fb0773a8bedd8de1b7b23f38c8abd0bb55",
+  "input": {
+    "child_kind": "echo",
+    "task": "x"
+  },
+  "value_sample": {
+    "clarification_a": null,
+    "clarification_q": null,
+    "result": {
+      "host_error": null,
+      "outcome": "ok",
+      "value": {
+        "clarification": null,
+        "task": "x"
+      }
+    }
+  }
+}

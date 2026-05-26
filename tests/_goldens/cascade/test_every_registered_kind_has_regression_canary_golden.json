@@ -1,0 +1,23 @@
+{
+  "hash": "bd2e12fdeb039e05496c217df0f94fb67e57c8847951b31bb442caa5b48109ca",
+  "input": {
+    "inner_input": {
+      "value": 1
+    },
+    "kinds": [
+      "constant"
+    ],
+    "stop_predicate": "True"
+  },
+  "value_sample": {
+    "chosen_kind": "constant",
+    "result": {
+      "host_error": null,
+      "outcome": "ok",
+      "value": 1
+    },
+    "tried": [
+      "constant"
+    ]
+  }
+}

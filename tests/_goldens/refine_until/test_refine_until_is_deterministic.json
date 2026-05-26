@@ -1,0 +1,47 @@
+{
+  "hash": "ad91fd564270a4b2c4ebd13e21a92335b8ff2a74975682bfcc11f0e84db42f65",
+  "input": {
+    "inner_input": {
+      "value": "draft"
+    },
+    "inner_kind": "constant",
+    "judge_kind": "judge",
+    "max_rounds": 2
+  },
+  "value_sample": {
+    "final": "draft",
+    "history": [
+      {
+        "candidate": {
+          "host_error": null,
+          "outcome": "ok",
+          "value": "draft"
+        },
+        "verdict": {
+          "host_error": null,
+          "outcome": "ok",
+          "value": {
+            "rationale": "fail",
+            "verdict": "fail"
+          }
+        }
+      },
+      {
+        "candidate": {
+          "host_error": null,
+          "outcome": "ok",
+          "value": "draft"
+        },
+        "verdict": {
+          "host_error": null,
+          "outcome": "ok",
+          "value": {
+            "rationale": "fail",
+            "verdict": "fail"
+          }
+        }
+      }
+    ],
+    "rounds": 2
+  }
+}

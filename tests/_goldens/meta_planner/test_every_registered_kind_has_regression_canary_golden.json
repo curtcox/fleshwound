@@ -1,0 +1,10 @@
+{
+  "hash": "31191e3e1ecbae995e0614de305f28800b3e6ed674f5de37bfe2730906085f2b",
+  "input": {
+    "task": "do nothing"
+  },
+  "value_sample": {
+    "plan": {},
+    "results": []
+  }
+}

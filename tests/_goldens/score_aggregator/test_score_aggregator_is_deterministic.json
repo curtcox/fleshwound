@@ -1,0 +1,20 @@
+{
+  "hash": "5f24dcca48f12bea2a397979470926a96f9e1b470693852df79a688aee9c1f73",
+  "input": {
+    "policy": "median",
+    "scores": [
+      {
+        "score": 1,
+        "weight": 1
+      },
+      {
+        "score": 3,
+        "weight": 1
+      }
+    ]
+  },
+  "value_sample": {
+    "aggregate": 3.0,
+    "n": 2
+  }
+}

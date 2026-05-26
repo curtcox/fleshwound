@@ -1,0 +1,12 @@
+{
+  "hash": "01dfd36a9567f93ea614ed037f58c96115a5327ea652aed91c6e0b487820865c",
+  "input": {
+    "examples": [],
+    "grader_kind": "rubric_grader"
+  },
+  "value_sample": {
+    "agreement": 0.0,
+    "bias": 0.0,
+    "per_example": []
+  }
+}

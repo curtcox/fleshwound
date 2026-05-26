@@ -1,0 +1,17 @@
+{
+  "hash": "722b1a3138db7972f0fe13e86a214d939b2dcf6c50c3514e9dc1d794ddec278d",
+  "input": {
+    "files": {
+      "a.txt": "old"
+    },
+    "task": "change"
+  },
+  "value_sample": {
+    "patches": [
+      {
+        "diff": "@@",
+        "path": "a.txt"
+      }
+    ]
+  }
+}

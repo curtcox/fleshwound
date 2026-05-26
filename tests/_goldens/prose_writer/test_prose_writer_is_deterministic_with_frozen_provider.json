@@ -1,0 +1,11 @@
+{
+  "hash": "03447d3b61319a0ce818645599c8432b8f6883e13a292a0a5d8409245a9d8928",
+  "input": {
+    "context": null,
+    "task": "greet"
+  },
+  "value_sample": {
+    "notes": "",
+    "text": "Hello"
+  }
+}

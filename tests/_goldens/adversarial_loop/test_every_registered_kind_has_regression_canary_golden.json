@@ -1,0 +1,14 @@
+{
+  "hash": "240df26ebb8c539faa07f3e3df5c335d18ee0ae9713722cc37f2a229fd12ce18",
+  "input": {
+    "max_rounds": 0,
+    "seed_input": {},
+    "success_predicate": "none",
+    "target_kind": "echo"
+  },
+  "value_sample": {
+    "history": [],
+    "rounds": 0,
+    "winning_input": null
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "hash": "b2f4b4ee173cdd32a4d212b324d21d51f9f352a96345d6217618b280e16728d4",
+  "input": {
+    "first_input": {
+      "value": {
+        "value": "ready"
+      }
+    },
+    "first_kind": "constant",
+    "second_kind": "constant"
+  },
+  "value_sample": {
+    "adapted_input": {
+      "value": "ready"
+    },
+    "first_result": {
+      "host_error": null,
+      "outcome": "ok",
+      "value": {
+        "value": "ready"
+      }
+    },
+    "second_result": {
+      "host_error": null,
+      "outcome": "ok",
+      "value": "ready"
+    }
+  }
+}

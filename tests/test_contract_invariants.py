@@ -4,9 +4,11 @@ import json
 
 from fleshwound.budget import BudgetLedger
 from fleshwound.catalog import catalog
+from fleshwound.provider import CallableProvider, ModelTextResult, Usage
 from fleshwound.runner import HOST_ERROR_CODES, run_step
 
 from conftest import assert_ok
+from tests._golden import assert_deterministic
 
 
 def _minimal_input(name: str):
@@ -55,3 +57,17 @@ def test_catalog_self_test_runs_full_catalog_without_unexpected_host_errors():
     exercised = {row["kind"] for row in value["results"]}
     assert exercised == set(catalog.entries) - {"catalog_self_test"}
     assert value["unexpected_host_errors"] == []
+
+
+def test_every_registered_kind_has_regression_canary_golden():
+    provider = CallableProvider(lambda prompt: ModelTextResult("{}", Usage(1, 1)))
+
+    for name in sorted(catalog.entries):
+        digest = assert_deterministic(
+            name,
+            _minimal_input(name),
+            provider=provider,
+            budget={"tokens": 1_000_000, "steps": 600, "depth": 8, "tool_calls": 200},
+        )
+
+        assert len(digest) == 64

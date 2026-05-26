@@ -1,0 +1,36 @@
+{
+  "hash": "364a2a4ce25cf900359b73276b9f40dcbde5bf5e62bcc0bc3be6b56279dd3483",
+  "input": {
+    "kinds_to_exercise": [
+      "constant",
+      "echo",
+      "kind_lister"
+    ]
+  },
+  "value_sample": {
+    "results": [
+      {
+        "expected_host_error": false,
+        "host_error": null,
+        "kind": "constant",
+        "outcome": "ok",
+        "unexpected_host_error": false
+      },
+      {
+        "expected_host_error": false,
+        "host_error": null,
+        "kind": "echo",
+        "outcome": "ok",
+        "unexpected_host_error": false
+      },
+      {
+        "expected_host_error": false,
+        "host_error": null,
+        "kind": "kind_lister",
+        "outcome": "ok",
+        "unexpected_host_error": false
+      }
+    ],
+    "unexpected_host_errors": []
+  }
+}

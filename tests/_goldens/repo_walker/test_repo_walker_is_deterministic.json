@@ -1,0 +1,35 @@
+{
+  "hash": "d60de4199c83da7d52de6e2a5a7624fcbbe7d6fe1175f95cb4fee79dab7bfc90",
+  "input": {
+    "per_file_kind": "echo",
+    "predicate": "input['path'].endswith('.py')",
+    "tree": {
+      "a.py": {
+        "content": "a"
+      },
+      "b.txt": {
+        "content": "b"
+      }
+    }
+  },
+  "value_sample": {
+    "per_file": {
+      "a.py": {
+        "host_error": null,
+        "outcome": "ok",
+        "value": {
+          "data": {
+            "content": "a"
+          },
+          "path": "a.py"
+        }
+      }
+    },
+    "skipped": [
+      {
+        "path": "b.txt",
+        "reason": "predicate_false"
+      }
+    ]
+  }
+}

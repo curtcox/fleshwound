@@ -1,0 +1,15 @@
+{
+  "hash": "9b868e7f9854e29748167c23bc8896631a3e31881c798d71aa9d4134870c2d3e",
+  "input": {
+    "aggregator_prompt": "",
+    "inner_input": {
+      "value": 1
+    },
+    "inner_kind": "constant",
+    "n": 0
+  },
+  "value_sample": {
+    "candidates": [],
+    "chosen": null
+  }
+}

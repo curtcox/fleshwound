@@ -1,0 +1,31 @@
+{
+  "hash": "0e0f0f586b317d8ad22f44f40238c9061ca77abf09a060d793e14b37e2a5af1b",
+  "input": {
+    "initial": {
+      "value": "x"
+    },
+    "stages": [
+      {
+        "kind": "constant"
+      },
+      {
+        "kind": "echo"
+      }
+    ]
+  },
+  "value_sample": {
+    "final": "x",
+    "stages": [
+      {
+        "host_error": null,
+        "outcome": "ok",
+        "value": "x"
+      },
+      {
+        "host_error": null,
+        "outcome": "ok",
+        "value": "x"
+      }
+    ]
+  }
+}

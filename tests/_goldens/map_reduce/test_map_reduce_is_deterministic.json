@@ -1,0 +1,26 @@
+{
+  "hash": "e758da3a3e4e0a9cbb156f0d77a672f730297fcde5fd1a8e3983d9625b9c23c2",
+  "input": {
+    "items": [
+      {
+        "value": "a"
+      },
+      {
+        "value": "b"
+      }
+    ],
+    "map_kind": "constant",
+    "reduce_kind": "echo"
+  },
+  "value_sample": {
+    "errors": [],
+    "mapped": [
+      "a",
+      "b"
+    ],
+    "reduced": [
+      "a",
+      "b"
+    ]
+  }
+}
