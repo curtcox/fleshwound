@@ -1,5 +1,25 @@
 # Fleshwound RLM Implementation Plan: Phases 1 and 2
 
+## Current Status
+
+Status as of the current implementation:
+
+- [x] Phase 1 is implemented.
+- [x] Phase 2 is implemented.
+- [x] `rlm_loop` is registered as a catalog kind in `fleshwound/kinds/core.py`.
+- [x] The loop uses structured JSON actions as its primary protocol.
+- [x] Direct answer, child step, direct LLM, think, fail, malformed-output, max-iteration, unknown-child-kind, and depth-floor paths are covered by tests.
+- [x] Strict protocol mode exists and is tested.
+- [x] RLM kind and action protocol docs exist in `docs/specs/rlm-loop-kind.md` and `docs/specs/rlm-action-protocol.md`.
+- [x] The full test suite passes with the current implementation.
+
+Remaining follow-up work:
+
+- [ ] Decide whether to move the RLM helpers and executor from `fleshwound/kinds/core.py` into a dedicated `fleshwound/kinds/rlm.py` module as the implementation grows.
+- [ ] Add an `include_model_text` input flag if traces become too token-heavy for production use.
+- [ ] Consider warnings for unknown top-level fields in strict mode; the current implementation accepts them.
+- [ ] Add more golden coverage for representative `rlm_loop` traces if future changes make trace stability important.
+
 ## Goal
 
 Implement the RLM pattern inside `fleshwound` as a cataloged recursion kind, without changing the core host contract. Phase 1 adds a minimal iterative RLM loop. Phase 2 replaces fragile free-form code generation with a structured action protocol.
@@ -36,6 +56,8 @@ This plan assumes the existing `fleshwound` architecture:
 ---
 
 # Phase 1: Minimal RLM Loop Kind
+
+Status: **complete**.
 
 ## Objective
 
@@ -290,6 +312,8 @@ Guard against `depth_remaining <= 1`; in that case the RLM kind should avoid `ct
 
 ## Phase 1 Tests
 
+Status: **complete**. Implemented in `tests/kinds/test_rlm_loop.py`.
+
 Create:
 
 ```text
@@ -384,18 +408,20 @@ Expected:
 
 ## Phase 1 Acceptance Criteria
 
-Phase 1 is complete when:
+Phase 1 is complete. Acceptance status:
 
-- `rlm_loop` is registered in the catalog.
-- `kind_lister` includes `rlm_loop`.
-- `run_step(..., kind="rlm_loop")` works with a fake provider.
-- direct-answer, child-step, malformed-output, and max-iteration tests pass.
-- all returned values are JSON-serializable.
-- no host contract changes are required.
+- [x] `rlm_loop` is registered in the catalog.
+- [x] `kind_lister` includes `rlm_loop`.
+- [x] `run_step(..., kind="rlm_loop")` works with a fake provider.
+- [x] Direct-answer, child-step, malformed-output, and max-iteration tests pass.
+- [x] All returned values are JSON-serializable.
+- [x] No host contract changes are required.
 
 ---
 
 # Phase 2: Structured Action Protocol
+
+Status: **complete**.
 
 ## Objective
 
@@ -654,6 +680,8 @@ until tests and prompts stabilize.
 
 ## Phase 2 Tests
 
+Status: **complete**. Implemented in `tests/kinds/test_rlm_loop_protocol.py`.
+
 Add or extend:
 
 ```text
@@ -748,19 +776,21 @@ Recommended policy: reject explicit over-budget requests; use defaults only when
 
 ## Phase 2 Acceptance Criteria
 
-Phase 2 is complete when:
+Phase 2 is complete. Acceptance status:
 
-- `rlm_loop` uses structured JSON actions as its primary control protocol.
-- protocol parsing and validation helpers are unit-tested.
-- invalid model output produces traceable controlled errors.
-- child-step observations can be assigned into loop state.
-- strict mode is available.
-- existing Phase 1 tests still pass.
-- no host contract changes are required.
+- [x] `rlm_loop` uses structured JSON actions as its primary control protocol.
+- [x] Protocol parsing and validation helpers are unit-tested.
+- [x] Invalid model output produces traceable controlled errors.
+- [x] Child-step observations can be assigned into loop state.
+- [x] Strict mode is available.
+- [x] Existing Phase 1 tests still pass.
+- [x] No host contract changes are required.
 
 ---
 
 # Suggested File Changes
+
+Status: **complete**, with optional follow-ups noted below.
 
 ## Add or Modify
 
@@ -777,6 +807,8 @@ fleshwound/kinds/__init__.py
 
 ## Add Tests
 
+Status: **complete**.
+
 ```text
 tests/kinds/test_rlm_loop.py
 tests/kinds/test_rlm_loop_protocol.py
@@ -784,12 +816,16 @@ tests/kinds/test_rlm_loop_protocol.py
 
 ## Optional Documentation
 
+Status: **complete**.
+
 ```text
 docs/specs/rlm-loop-kind.md
 docs/specs/rlm-action-protocol.md
 ```
 
 ## Optional Golden Tests
+
+Status: **partially complete**. Existing catalog/golden coverage includes `rlm_loop`; add more trace-specific goldens only if trace stability becomes a product requirement.
 
 ```text
 tests/_goldens/kind_lister/test_rlm_loop_registered.json
@@ -799,16 +835,24 @@ tests/_goldens/kind_lister/test_rlm_loop_registered.json
 
 # Implementation Order
 
-1. Add `rlm_loop` executor with a minimal loop.
-2. Add fake-provider tests for direct answer and max iterations.
-3. Add child-step action support.
-4. Add trace output.
-5. Add malformed-output handling.
-6. Add protocol parser helper.
-7. Add protocol validator helper.
-8. Add `assign` / `vars` state model.
-9. Add strict protocol mode.
-10. Document the kind and action protocol.
+Completed:
+
+- [x] Add `rlm_loop` executor with a minimal loop.
+- [x] Add fake-provider tests for direct answer and max iterations.
+- [x] Add child-step action support.
+- [x] Add trace output.
+- [x] Add malformed-output handling.
+- [x] Add protocol parser helper.
+- [x] Add protocol validator helper.
+- [x] Add `assign` / `vars` state model.
+- [x] Add strict protocol mode.
+- [x] Document the kind and action protocol.
+
+Remaining:
+
+- [ ] Optional: split `rlm_loop` into a dedicated module if `core.py` becomes too crowded.
+- [ ] Optional: add `include_model_text` to suppress raw model text in traces.
+- [ ] Optional: add warning or rejection behavior for unknown top-level fields in strict mode.
 
 ---
 
