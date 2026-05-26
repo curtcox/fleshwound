@@ -381,15 +381,44 @@ def directory_input(input: dict[str, Any], ctx: Any) -> Any:
 @register("repo_walker", convention="run per_file_kind for matching virtual files")
 def repo_walker(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
     tree = input.get("tree") or {}
-    per_file = {}
+    predicate = str(input.get("predicate", "True"))
+    matching: list[tuple[str, Any]] = []
+    skipped = []
     for path, data in tree.items():
-        per_file[path] = ctx.step({"path": path, "data": data}, _request(ctx, len(tree) or 1), kind=input.get("per_file_kind"))
-    return {"per_file": per_file}
+        child_input = {"path": path, "data": data}
+        try:
+            include = bool(_monty_run(predicate, child_input, ctx))
+        except Exception:
+            skipped.append({"path": path, "reason": "predicate_error"})
+            continue
+        if include:
+            matching.append((path, data))
+        else:
+            skipped.append({"path": path, "reason": "predicate_false"})
+
+    per_file = {}
+    for path, data in matching:
+        per_file[path] = ctx.step({"path": path, "data": data}, _request(ctx, len(matching) or 1), kind=input.get("per_file_kind"))
+    result = {"per_file": per_file}
+    if skipped:
+        result["skipped"] = skipped
+    return result
 
 
 @register("patch_applier_proxy", convention="pure-data patch apply simulation")
 def patch_applier_proxy(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
-    return {"applied": [p.get("path", "") for p in input.get("patches", [])], "rejected": []}
+    applied = []
+    rejected = []
+    for patch in input.get("patches", []):
+        path = patch.get("path", "")
+        diff = patch.get("diff", "")
+        if not path:
+            rejected.append({"path": path, "reason": "missing path"})
+        elif not diff:
+            rejected.append({"path": path, "reason": "missing diff"})
+        else:
+            applied.append(path)
+    return {"applied": applied, "rejected": rejected}
 
 
 @register("pipeline", convention="sequential stage composition")
