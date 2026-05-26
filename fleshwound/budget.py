@@ -63,6 +63,7 @@ class BudgetEvent:
     kind: str
     amount: dict[str, int]
     reason: str
+    resolved_kind: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -93,10 +94,25 @@ class BudgetLedger:
         self._event(root_id, "create_root", root_limit.to_dict(), "create_root")
 
     def _event(
-        self, budget_id: str, kind: str, amount: dict[str, int], reason: str
+        self,
+        budget_id: str,
+        kind: str,
+        amount: dict[str, int],
+        reason: str,
+        *,
+        resolved_kind: str | None = None,
     ) -> None:
         self._seq += 1
-        self.events.append(BudgetEvent(self._seq, budget_id, kind, dict(amount), reason))
+        self.events.append(
+            BudgetEvent(
+                self._seq,
+                budget_id,
+                kind,
+                dict(amount),
+                reason,
+                resolved_kind,
+            )
+        )
 
     def _node(self, budget_id: str) -> _BudgetNode:
         try:
@@ -160,7 +176,12 @@ class BudgetLedger:
         return True
 
     def allocate_child(
-        self, parent_budget_id: str, requested: BudgetLimit | dict[str, int], reason: str
+        self,
+        parent_budget_id: str,
+        requested: BudgetLimit | dict[str, int],
+        reason: str,
+        *,
+        resolved_kind: str | None = None,
     ) -> str | None:
         request = BudgetLimit.from_value(requested)
         parent = self._node(parent_budget_id)
@@ -184,7 +205,13 @@ class BudgetLedger:
         parent.used.steps += request.steps
         parent.used.tool_calls += request.tool_calls
         self._nodes[child_id] = _BudgetNode(child_id, parent_budget_id, request, BudgetUsage())
-        self._event(parent_budget_id, "allocate_child", request.to_dict(), reason)
+        self._event(
+            parent_budget_id,
+            "allocate_child",
+            request.to_dict(),
+            reason,
+            resolved_kind=resolved_kind,
+        )
         return child_id
 
     def close_child(self, child_budget_id: str, reason: str = "close_child") -> BudgetSnapshot:

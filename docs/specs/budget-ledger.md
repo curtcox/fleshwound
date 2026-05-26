@@ -63,7 +63,8 @@ Every mutation to the ledger creates a budget event.
   "amount": {
     "tokens": 1200
   },
-  "reason": "larql generation"
+  "reason": "larql generation",
+  "resolved_kind": null
 }
 ```
 
@@ -76,13 +77,14 @@ Required fields:
 | `kind` | Event kind. |
 | `amount` | Object containing changed dimensions. |
 | `reason` | Human-readable reason. |
+| `resolved_kind` | Resolved child kind for `allocate_child`; otherwise `null`. |
 
 Event kinds:
 
 | Kind | Meaning |
 |---|---|
 | `create_root` | Root budget created. |
-| `allocate_child` | Parent budget reserved for a child. The event's `amount` carries the requested envelope; the event's `reason` carries the resolved kind name (e.g. `"allocate_child kind=program_writer"`). When default-policy resolution picked the kind, this is the only place the choice is recorded; envelopes do not surface it. |
+| `allocate_child` | Parent budget reserved for a child. The event's `amount` carries the requested envelope; the event's `resolved_kind` carries the resolved kind name (e.g. `"program_writer"`). When default-policy resolution picked the kind, this is the only place the choice is recorded; envelopes do not surface it. |
 | `charge_tokens` | Tokens charged. |
 | `charge_step` | Step charged. |
 | `charge_tool_call` | Tool call charged. |
@@ -262,13 +264,14 @@ class BudgetEvent:
     kind: str
     amount: dict
     reason: str
+    resolved_kind: str | None = None
 
 class BudgetLedger:
     def snapshot(self, budget_id: str) -> BudgetSnapshot: ...
     def charge_tokens(self, budget_id: str, amount: int, reason: str) -> None: ...
     def charge_step(self, budget_id: str, reason: str) -> None: ...
     def charge_tool_call(self, budget_id: str, reason: str) -> None: ...
-    def allocate_child(self, parent_budget_id: str, requested: BudgetLimit, reason: str) -> str: ...
+    def allocate_child(self, parent_budget_id: str, requested: BudgetLimit, reason: str, *, resolved_kind: str | None = None) -> str: ...
     def close_child(self, child_budget_id: str) -> BudgetSnapshot: ...
 ```
 

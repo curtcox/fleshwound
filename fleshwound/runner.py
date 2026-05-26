@@ -242,6 +242,7 @@ def _run_allocated_step(
             budget_id,
             request,
             f"allocate_child kind={resolved_child}",
+            resolved_kind=resolved_child,
         )
         if child_id is None:
             return host_error("budget_denied", "Requested child budget exceeds remaining parent budget.")
