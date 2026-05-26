@@ -335,12 +335,21 @@ _llm_json_kind("diff_writer", "Write a unified diff.", lambda i, t: {"diff": t, 
 _llm_json_kind("patch_set_writer", "Write patch set JSON.", lambda i, t: {"patches": []})
 _llm_json_kind("directory_writer", "Write a virtual directory tree.", lambda i, t: {"tree": {}, "notes": t})
 _llm_json_kind("conversation", "Continue the conversation.", lambda i, t: {"reply": t, "turns": list(i.get("turns", [])) + [{"role": "assistant", "content": t}]})
-_llm_json_kind("kind_chooser", "Choose a catalog kind.", lambda i, t: {"chosen_kind": t.strip(), "rationale": t})
 _llm_json_kind("rubric_grader", "Grade using the rubric.", lambda i, t: {"scores": [], "weighted_total": 0, "notes": t})
 _llm_json_kind("pairwise_preference", "Choose a winner.", lambda i, t: {"winner": "tie", "rationale": t, "confidence": 0.0})
 _llm_json_kind("attack_generator", "Generate an adversarial input.", lambda i, t: {"crafted_input": i.get("target_input_template", {}), "rationale": t})
 _llm_json_kind("failure_classifier", "Classify failure.", lambda i, t: {"category": "ok", "subcategory": "", "evidence": t})
 _llm_json_kind("convention_adapter", "Adapt one kind's output to another kind's input.", lambda i, t: {"target_input": i.get("source_value"), "lossy": False, "notes": t})
+
+
+@register("kind_chooser", convention="task -> chosen_kind/rationale using catalog-grounded llm")
+def kind_chooser(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
+    catalog_doc = json.dumps(dict(sorted(ctx.catalog.items())), sort_keys=True)
+    text = ctx.llm(f"Choose a catalog kind for this task.\nCatalog: {catalog_doc}\nTask: {input.get('task')}").get("text", "")
+    try:
+        return json.loads(text)
+    except Exception:
+        return {"chosen_kind": text.strip(), "rationale": text}
 
 
 @register("function_map_writer", convention="write functions for signatures")
@@ -467,12 +476,23 @@ def meta_planner(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
 def catalog_self_test(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
     names = input.get("kinds_to_exercise") or sorted(ctx.catalog)
     results = []
+    expected_failure_kinds = {"always_host_error", "budget_hog", "infinite_descent", "noop_fail", "noop_fail_monty"}
     for name in names:
         if name == "catalog_self_test":
             continue
         result = ctx.step(_minimal_input(name), _request(ctx, len(names) or 1), kind=name)
-        results.append({"kind": name, "outcome": result["outcome"], "host_error": result.get("host_error")})
-    return {"results": results}
+        expected_host_error = name in expected_failure_kinds
+        unexpected = result["outcome"] == "host_error" and not expected_host_error
+        results.append(
+            {
+                "kind": name,
+                "outcome": result["outcome"],
+                "host_error": result.get("host_error"),
+                "expected_host_error": expected_host_error,
+                "unexpected_host_error": unexpected,
+            }
+        )
+    return {"results": results, "unexpected_host_errors": [row for row in results if row["unexpected_host_error"]]}
 
 
 def _minimal_input(name: str) -> Any:
@@ -483,7 +503,50 @@ def _minimal_input(name: str) -> Any:
         "prose_writer": {"task": "test", "context": None},
         "classifier": {"text": "a", "labels": ["a"]},
         "judge": {"candidate": "x", "criteria": "ok"},
+        "program_writer": {"task": "return ok", "context": None, "output_schema": {}},
+        "map_reduce": {"items": [], "map_kind": "echo", "reduce_kind": None},
+        "retry_wrapper": {"inner_input": {"value": 1}, "inner_kind": "constant", "max_attempts": 1},
+        "ensemble": {"inner_input": {"value": 1}, "inner_kind": "constant", "n": 0, "aggregator_prompt": ""},
+        "clarify_then_delegate": {"task": "x", "child_kind": "echo"},
+        "random_pick": {"inner_input": {}},
+        "subset_pick": {"inner_input": {"value": 1}, "subset": ["constant"]},
+        "inherit_chain": {"task": "x", "depth": 0},
+        "always_host_error": {"code": "executor_error"},
+        "budget_hog": {"target": "steps"},
+        "provider_swap": {"inner_input": {"value": 1}, "inner_kind": "constant"},
+        "dynamic_dispatch": {"chooser": "literal", "literal_kind": "constant", "inner_input": {"value": 1}},
+        "cond_dispatch": {"branches": [], "default_kind": "constant", "inner_input": {"value": 1}},
+        "cascade": {"inner_input": {"value": 1}, "kinds": ["constant"], "stop_predicate": "True"},
         "score_aggregator": {"scores": [], "policy": "weighted_mean"},
+        "content_hash_memo": {"inner_kind": "constant", "inner_input": {"value": 1}, "memo": {}},
+        "dedup_then_map": {"items": [], "inner_kind": "echo"},
+        "schema_designer": {"domain": "test", "examples": []},
+        "diff_writer": {"file": "a.txt", "content": "", "change": "none"},
+        "patch_set_writer": {"files": {}, "task": "none"},
+        "directory_writer": {"task": "empty tree", "shape": "tree"},
+        "conversation": {"system": "s", "turns": []},
+        "kind_chooser": {"task": "return input"},
+        "rubric_grader": {"candidate": "x", "rubric": []},
+        "pairwise_preference": {"a": 1, "b": 2, "criterion": "best"},
+        "attack_generator": {"target_kind": "echo", "target_input_template": {}, "attack_goal": "none"},
+        "failure_classifier": {"step_result": {"outcome": "ok", "value": 1, "host_error": None}},
+        "convention_adapter": {"source_kind": "echo", "target_kind": "echo", "source_value": {"value": 1}},
+        "function_map_writer": {"signatures": {}, "context": None},
+        "function_map_editor": {"current": {}, "edits": []},
+        "ast_transform": {"ast": {}, "transform": "none"},
+        "directory_input": {"tree": {}, "task": "return empty"},
+        "repo_walker": {"tree": {}, "per_file_kind": "echo", "predicate": "True"},
+        "patch_applier_proxy": {"patches": []},
+        "pipeline": {"stages": [], "initial": None},
+        "precondition_gate": {"predicate": "False", "inner_kind": "echo", "inner_input": {}},
+        "transformer": {"inner_input_template": {"value": 1}, "inner_kind": "constant"},
+        "meta_planner": {"task": "do nothing"},
+        "refine_until": {"inner_input": {"value": "ok"}, "inner_kind": "constant", "judge_kind": "judge", "max_rounds": 0},
+        "tournament": {"candidates": [], "judge_kind": "pairwise_preference"},
+        "calibration": {"grader_kind": "rubric_grader", "examples": []},
+        "adversarial_loop": {"target_kind": "echo", "seed_input": {}, "max_rounds": 0, "success_predicate": "none"},
+        "regression_canary": {"frozen_kind": "constant", "frozen_input": {"value": 1}, "expected_value_hash": _hash(1)},
+        "chain_with_adapter": {"first_kind": "constant", "first_input": {"value": {"value": 1}}, "second_kind": "constant"},
         "kind_lister": {},
         "always_partial": {},
     }.get(name, {})
