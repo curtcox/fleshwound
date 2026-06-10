@@ -8,6 +8,8 @@ as "unavailable" rather than raising.
 
 Usage:
     python tools/build_site.py --reports reports --out site --api api
+
+The output directory is deleted and recreated on each run.
 """
 
 from __future__ import annotations
@@ -37,8 +39,8 @@ except Exception:  # pragma: no cover
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# Root-level narrative docs published under guide/.
-GUIDE_DOCS = ["README.md", "rlm_design_conversation.md", "Recursive_step_prompt.md"]
+# Narrative docs published under guide/.
+GUIDE_DOCS = ["README.md", "docs/history/rlm_design_conversation.md", "Recursive_step_prompt.md"]
 
 NAV = [
     ("Home", "index.html"),
