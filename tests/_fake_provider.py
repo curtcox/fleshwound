@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 
 from fleshwound.provider import ModelTextResult, Usage
 
@@ -29,4 +28,3 @@ class FakeProvider:
 
 def text_result(text: str, prompt_tokens: int = 1, completion_tokens: int = 1) -> ModelTextResult:
     return ModelTextResult(text, Usage(prompt_tokens, completion_tokens))
-

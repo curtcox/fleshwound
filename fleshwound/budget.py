@@ -15,7 +15,7 @@ class BudgetLimit:
 
     @classmethod
     def from_value(cls, value: "BudgetLimit | dict[str, int]") -> "BudgetLimit":
-        if isinstance(value, cls):
+        if isinstance(value, BudgetLimit):
             return value
         return cls(
             tokens=int(value.get("tokens", 0)),

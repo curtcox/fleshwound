@@ -682,7 +682,7 @@ def repo_walker(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
     per_file = {}
     for path, data in matching:
         per_file[path] = ctx.step({"path": path, "data": data}, _request(ctx, len(matching) or 1), kind=input.get("per_file_kind"))
-    result = {"per_file": per_file}
+    result: dict[str, Any] = {"per_file": per_file}
     if skipped:
         result["skipped"] = skipped
     return result

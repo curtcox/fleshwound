@@ -389,7 +389,7 @@ def render_metrics(out: Path) -> dict:
     by_ext: Counter = Counter()
     total_loc = 0
     rows = []
-    largest = (None, -1)  # (path, loc)
+    largest: tuple[str | None, int] = (None, -1)  # (path, loc)
     for rel in sorted(files):
         path = REPO_ROOT / rel
         if not path.is_file():

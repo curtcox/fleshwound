@@ -66,7 +66,9 @@ class TestBudget:
                     ledger=ledger,
                 )
             )
-            return next(event.resolved_kind for event in ledger.events if event.kind == "allocate_child")
+            resolved_kind = next(event.resolved_kind for event in ledger.events if event.kind == "allocate_child")
+            assert resolved_kind is not None
+            return resolved_kind
 
         assert resolved_kind_for_seed(13) == resolved_kind_for_seed(13)
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from typing import Any, Callable, Protocol
 
 
@@ -62,4 +62,3 @@ class CallableProvider:
         if isinstance(result, ModelTextResult):
             return result
         return ModelTextResult(text=str(result), usage=Usage(prompt_tokens=len(prompt.split())))
-

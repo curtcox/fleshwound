@@ -5,7 +5,6 @@ from fleshwound.provider import CallableProvider, ModelTextResult, Usage
 from fleshwound.runner import run_step
 
 from conftest import assert_ok
-from tests._fake_provider import FakeProvider, text_result
 from tests._golden import assert_deterministic
 
 
