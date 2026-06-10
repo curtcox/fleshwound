@@ -40,7 +40,7 @@ except Exception:  # pragma: no cover
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Narrative docs published under guide/.
-GUIDE_DOCS = ["README.md", "docs/history/rlm_design_conversation.md", "Recursive_step_prompt.md"]
+GUIDE_DOCS = ["README.md", "docs/history/rlm_design_conversation.md", "fleshwound/kinds/program_writer_prompt.md"]
 
 NAV = [
     ("Home", "index.html"),

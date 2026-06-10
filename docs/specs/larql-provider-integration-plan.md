@@ -1,5 +1,7 @@
 # Larql Provider Integration Plan for Fleshwound
 
+> **Status: long-term plan.** This is roadmap context, not an active v1 requirement.
+
 ## 1. Goal
 
 Use Larql as a rich model provider for Fleshwound. When Fleshwound uses a Larql model, Larql must be able to call back into Fleshwound as a function/tool. Those embedded or spawned Fleshwound calls must receive a child budget allocated by Larql and enforced by Fleshwound's shared budget ledger.
@@ -44,7 +46,7 @@ Current relevant files:
 fleshwound/
   __init__.py
   runner.py
-Recursive_step_prompt.md
+fleshwound/kinds/program_writer_prompt.md
 pyproject.toml
 ```
 

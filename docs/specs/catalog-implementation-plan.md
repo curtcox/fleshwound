@@ -196,7 +196,7 @@ Test surfaces (each is a test method, not a whole class):
 
 ### Phase 8 — `program_writer`
 
-- Move `Recursive_step_prompt.md` to `fleshwound/kinds/program_writer_prompt.md`. Executor loads it from there.
+- The `program_writer` prompt asset lives at `fleshwound/kinds/program_writer_prompt.md`.
 - Tests: end-to-end with FakeProvider scripting plausible Monty code; child step delegation; status/outcome distinction; partial/error paths.
 - This is the first kind with a substantial prompt asset — establish the convention.
 

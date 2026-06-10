@@ -84,7 +84,7 @@ For each kind:
 
 ### `program_writer`
 
-- Canonical entry; full spec in `Recursive_step_prompt.md`.
+- Canonical entry; prompt asset in `fleshwound/kinds/program_writer_prompt.md`.
 - **stresses** — almost everything: §5 budget partition; §5.2 refund-on-every-close; §4 host safety nets; the value convention vs. host outcome distinction (`status` vs. `outcome`).
 
 ### `map_reduce`

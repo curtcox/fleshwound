@@ -15,6 +15,14 @@ on Monty. The public package entry point is `fleshwound.run_step`.
 - Tests: `tests/`, with per-kind groups in `tests/kinds/`.
 - Historical design notes: `docs/history/`.
 
+## Active Vs Long-Term Context
+
+- Active API: `run_step(input, budget, provider, kind=...)`.
+- Legacy API: `run_step(task=..., llm=...)`, kept for the doctor path.
+- Active execution mode: embedded/in-process only.
+- Long-term plans: Larql provider integration and spawned workers under
+  `docs/specs/*larql*` and `docs/specs/*spawned*`.
+
 ## Commands
 
 Canonical local setup uses an editable pip install because it matches CI and
@@ -47,8 +55,8 @@ make test-one PYTEST_ARGS='tests/kinds/test_group_a.py::TestBudget'
   effect. See `fleshwound/kinds/__init__.py`.
 - `run_step(task=..., llm=...)` is the legacy doctor path. New work should use
   the contract-shaped `run_step(input, budget, provider, kind=...)` path.
-- `Recursive_step_prompt.md` is used by the legacy path. The modern
-  `program_writer` kind reads `fleshwound/kinds/program_writer_prompt.md`.
+- `fleshwound/kinds/program_writer_prompt.md` is the prompt asset for
+  `program_writer` and for the legacy doctor path.
 - `pytest --record` rewrites files under `tests/_goldens/`; use it only when
   intentionally updating determinism fixtures.
 - `tools/build_site.py --out PATH` deletes and recreates `PATH`.
@@ -67,7 +75,7 @@ Do not edit `.venv/`, `.pytest_cache/`, `.mypy_cache`, `.ruff_cache/`,
 ## Project Conventions
 
 - There is no repo-specific branch, commit message, or PR format yet.
-- CI and local checks should agree on Python 3.12 where practical.
+- Python 3.12 is the supported local and CI version.
 - GitHub Pages must continue to publish the developer dashboard with compile,
   lint, type-check, test, coverage, and API-report information whenever `main`
   changes.

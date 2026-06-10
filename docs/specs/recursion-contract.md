@@ -2,7 +2,7 @@
 
 Protocol version: `fleshwound-larql/1`
 
-This document is the source of truth for the recursion contract between Fleshwound and any caller (in-process Monty step code, the Larql provider, spawned workers, or a user-facing entry point). Other documents in `docs/specs/` and the example prompts in `examples/` defer to this document.
+This document is the source of truth for the recursion contract between Fleshwound and any caller (in-process Monty step code, the Larql provider, spawned workers, or a user-facing entry point). Other documents in `docs/specs/` and prompt assets defer to this document.
 
 ## 1. Scope
 
@@ -182,7 +182,7 @@ The host wraps every executor invocation with:
 
 ### 6.1 Example entries
 
-- **`program_writer`** — LLM-driven. Convention: input is `{"task": str, "context": dict|None, "output_schema": dict|None}`; value is `{"status": "complete"|"partial"|"error", "program": str, "notes": str, "error": ... }`. Charges tokens and one `step`. Documented by `examples/recursive_step_prompt.md`.
+- **`program_writer`** — LLM-driven. Convention: input is `{"task": str, "context": dict|None, "output_schema": dict|None}`; value is `{"status": "complete"|"partial"|"error", "program": str, "notes": str, "error": ... }`. Charges tokens and one `step`. Prompt asset: `fleshwound/kinds/program_writer_prompt.md`.
 - **`monty_exec`** — non-LLM. Convention: input is `{"code": str}`; value is whatever the executed code's final expression evaluated to. Charges one `step` and no tokens.
 - (the full catalog under consideration lives in [`recursion-kinds-catalog.md`](recursion-kinds-catalog.md), which doubles as the contract-stress fixture.)
 

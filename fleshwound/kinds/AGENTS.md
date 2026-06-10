@@ -7,8 +7,8 @@ This directory contains built-in catalog kinds.
 - `__init__.py` imports `core.py` for registration side effects.
 - `core.py` currently contains all built-in kind executors and their
   `@register(...)` calls.
-- `program_writer_prompt.md` is the prompt asset read by the modern
-  `program_writer` kind.
+- `program_writer_prompt.md` is the prompt asset read by the `program_writer`
+  kind and the legacy doctor path.
 
 The preferred long-term layout is one module per kind, with registration in the
 kind module and import wiring from `__init__.py`. Until that split happens, use

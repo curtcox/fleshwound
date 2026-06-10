@@ -21,11 +21,11 @@ directory are supporting specs, implementation plans, or deferred design notes.
   current consolidated `fleshwound/kinds/core.py`.
 - `rlm_plan.md` - plan and progress notes for the RLM loop.
 
-## Deferred Design Notes
+## Long-Term Plans
 
 - `larql-provider-integration-plan.md`
 - `larql-provider-protocol.md`
 - `spawned-mode-future.md`
 - `spawned-worker-protocol.md`
 
-Treat deferred design notes as roadmap context, not active v1 requirements.
+Treat these as roadmap context, not active v1 requirements.

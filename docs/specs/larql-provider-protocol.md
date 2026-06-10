@@ -1,5 +1,7 @@
 # Fleshwound/Larql Provider Protocol
 
+> **Status: long-term plan.** This protocol is roadmap context, not an active v1 requirement.
+
 Protocol version: `fleshwound-larql/1`
 
 ## 1. Purpose

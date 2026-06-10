@@ -2,7 +2,7 @@
 
 Protocol version: `fleshwound-larql/1`
 
-> **Status: deferred.** v1 is embedded-only. This document describes the intended spawned-mode protocol but is not in force; the canonical contract is `recursion-contract.md`. Known issues that block turning spawned mode on are in [`spawned-mode-future.md`](spawned-mode-future.md).
+> **Status: long-term plan.** v1 is embedded-only. This document describes the intended spawned-mode protocol but is not in force; the canonical contract is `recursion-contract.md`. Known issues that block turning spawned mode on are in [`spawned-mode-future.md`](spawned-mode-future.md).
 
 ## 1. Purpose
 

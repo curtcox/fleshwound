@@ -1,6 +1,6 @@
 # Spawned Mode — Future Issues
 
-> v1 of Fleshwound is **embedded-only**. This document collects the known design and implementation issues that must be resolved before spawned mode (running a Fleshwound step in a child process under a serialized budget) is enabled. The intended wire protocol is sketched in [`spawned-worker-protocol.md`](spawned-worker-protocol.md); this document is its companion punch list.
+> **Status: long-term plan.** v1 of Fleshwound is **embedded-only**. This document collects the known design and implementation issues that must be resolved before spawned mode (running a Fleshwound step in a child process under a serialized budget) is enabled. The intended wire protocol is sketched in [`spawned-worker-protocol.md`](spawned-worker-protocol.md); this document is its companion punch list.
 
 Spawned mode was originally motivated by two use cases:
 

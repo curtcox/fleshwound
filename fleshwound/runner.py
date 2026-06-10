@@ -19,7 +19,7 @@ from .provider import CallableProvider, ModelProvider, Usage
 import fleshwound.kinds  # noqa: F401  side-effect: register built-ins
 
 
-STEP_PROMPT_PATH = Path(__file__).resolve().parent.parent / "Recursive_step_prompt.md"
+STEP_PROMPT_PATH = Path(__file__).resolve().parent / "kinds" / "program_writer_prompt.md"
 DEFAULT_BUDGET = {"tokens": 100_000, "steps": 32, "depth": 8, "tool_calls": 16}
 HOST_ERROR_CODES = {
     "budget_exhausted",
