@@ -1,0 +1,86 @@
+name: Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment; let an in-progress run finish.
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # full history for per-file "last changed"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install -e ".[site]"
+
+      - name: Prepare reports dir
+        run: mkdir -p reports
+
+      # Each analysis step records its exit code to reports/<name>.rc and never
+      # fails the job, so the site always publishes and the dashboard reflects
+      # the real result.
+      - name: Compilation (byte-compile)
+        run: |
+          set +e
+          python -m compileall -q fleshwound tests | tee reports/compile.txt
+          echo "${PIPESTATUS[0]}" > reports/compile.rc
+
+      - name: Lint (ruff)
+        run: |
+          set +e
+          ruff check fleshwound tests --output-format=json > reports/ruff.json
+          echo "$?" > reports/lint.rc
+
+      - name: Static analysis (mypy)
+        run: |
+          set +e
+          mypy fleshwound --output=json > reports/mypy.json
+          echo "$?" > reports/types.rc
+
+      - name: Tests + coverage (pytest)
+        run: |
+          set +e
+          pytest -v \
+            --junitxml=reports/junit.xml \
+            --cov=fleshwound --cov-report=json:reports/coverage.json
+          echo "$?" > reports/tests.rc
+
+      - name: API reference (pdoc)
+        run: |
+          set +e
+          pdoc fleshwound -o api
+          echo "$?" > reports/api.rc
+
+      - name: Build site
+        run: python tools/build_site.py --reports reports --out site --api api
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

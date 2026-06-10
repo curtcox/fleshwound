@@ -3,3 +3,11 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .DS_Store
+
+# Pages build outputs
+/site/
+/reports/
+/api/
+.coverage
+.mypy_cache/
+.ruff_cache/

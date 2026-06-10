@@ -9,6 +9,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
+site = ["pytest", "pytest-cov", "ruff", "mypy", "pdoc", "markdown", "pygments"]
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -22,3 +23,11 @@ pythonpath = [".", "tests"]
 markers = [
     "integration: exercises the full runner path with real integration boundaries",
 ]
+
+[tool.ruff]
+target-version = "py310"
+exclude = [".venv", "build"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
