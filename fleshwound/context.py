@@ -33,6 +33,9 @@ class RunContext:
     def llm(self, prompt: str) -> dict[str, Any]:
         return self._llm_fn(prompt)
 
+    def tool_call(self, reason: str) -> bool:
+        return self.ledger.charge_tool_call(self.budget_id, reason)
+
     def step(
         self,
         input: Any,

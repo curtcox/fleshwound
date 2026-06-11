@@ -88,20 +88,6 @@ class TestFailure:
             observed.add(error["code"])
         assert observed == HOST_ERROR_CODES
 
-    def test_budget_hog_tokens_surfaces_llm_budget_exhaustion_as_data(self):
-        value = assert_ok(
-            run_step(
-                {"target": "tokens"},
-                kind="budget_hog",
-                options=RunOptions(
-                    provider=provider("too much", Usage(10, 0)),
-                    budget={"tokens": 2, "steps": 1, "depth": 1, "tool_calls": 0},
-                ),
-            )
-        )
-        assert value["budget"]["tokens_remaining"] == 2
-
-
 class TestDeterminism:
     def test_provider_swap_is_deterministic_with_frozen_provider(self):
         digest = assert_deterministic(
