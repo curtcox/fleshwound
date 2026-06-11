@@ -1,4 +1,14 @@
-"""Built-in catalog kind: monty_exec."""
+"""Built-in catalog kind: monty_exec.
+
+Evaluates Monty ``code`` with full ``ctx.*`` bound as externals; returns the final
+expression value.
+
+When to use: ad-hoc step logic without registering a dedicated kind.
+
+Similar kinds: ``program_writer``; ``transformer``; ``precondition_gate``.
+
+Prefer alternatives when: use ``program_writer`` when an LLM should author code;
+use dedicated kinds when logic is stable and reusable."""
 
 from __future__ import annotations
 

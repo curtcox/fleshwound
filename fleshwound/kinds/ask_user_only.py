@@ -1,4 +1,14 @@
-"""Built-in catalog kind: ask_user_only."""
+"""Built-in catalog kind: ask_user_only.
+
+Asks one question via ``ctx.ask_user`` and returns the answer, or a structured
+unavailable response when no callback was bound.
+
+When to use: human-in-the-loop leaves and ``ask_user`` gating tests.
+
+Similar kinds: ``clarify_then_delegate``; ``rlm_loop``.
+
+Prefer alternatives when: use ``clarify_then_delegate`` when clarification feeds a
+downstream kind; use a custom parent for multiple questions."""
 
 from __future__ import annotations
 

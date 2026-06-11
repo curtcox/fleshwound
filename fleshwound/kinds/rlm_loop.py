@@ -1,4 +1,16 @@
-"""Built-in catalog kind: rlm_loop and RLM action protocol helpers."""
+"""Built-in catalog kind: rlm_loop and RLM action protocol helpers.
+
+Iterative RLM agent: LLM cycles emit structured actions (``answer``, ``step``,
+``llm``, ``think``, ``fail``), executed via ``ctx.step`` / ``ctx.llm`` with trace
+and state in the value. Full spec: ``docs/specs/rlm-loop-kind.md``.
+
+When to use: multi-iteration reasoning with inspectable traces and child delegation.
+
+Similar kinds: ``meta_planner``; ``refine_until``; ``program_writer``;
+``conversation``.
+
+Prefer alternatives when: use ``meta_planner`` for one-shot plans; use
+``refine_until`` for simple judge loops; use ``program_writer`` for one-shot code."""
 
 from __future__ import annotations
 

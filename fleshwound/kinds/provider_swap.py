@@ -1,4 +1,13 @@
-"""Built-in catalog kind: provider_swap."""
+"""Built-in catalog kind: provider_swap.
+
+Runs ``inner_kind`` under an overridden ``provider`` (per-subtree inheritance).
+
+When to use: multi-model pipelines and provider override contract tests.
+
+Similar kinds: ``transformer``; ``pipeline``.
+
+Prefer alternatives when: use per-stage overrides in custom parents when only some
+hops swap models."""
 
 from __future__ import annotations
 

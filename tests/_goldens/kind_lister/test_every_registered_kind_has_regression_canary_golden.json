@@ -1,5 +1,5 @@
 {
-  "hash": "b3991cf4cfe55cb9f2f0088e7a0302371e738f6b8d761526caae9144bf86c73c",
+  "hash": "d0399d9b66180387f355950461d8d3ca9681f033da050faf3e4e35151325f81c",
   "input": {},
   "value_sample": {
     "kinds": [
@@ -24,7 +24,7 @@
         "name": "ast_transform"
       },
       {
-        "convention": "LLM-backed structured kind attack_generator",
+        "convention": "target_kind/goal -> crafted_input/rationale via ctx.llm",
         "name": "attack_generator"
       },
       {
@@ -68,11 +68,11 @@
         "name": "content_hash_memo"
       },
       {
-        "convention": "LLM-backed structured kind convention_adapter",
+        "convention": "source_kind/target_kind/source_value -> target_input via ctx.llm",
         "name": "convention_adapter"
       },
       {
-        "convention": "LLM-backed structured kind conversation",
+        "convention": "system/turns -> reply and appended turns via ctx.llm",
         "name": "conversation"
       },
       {
@@ -80,7 +80,7 @@
         "name": "dedup_then_map"
       },
       {
-        "convention": "LLM-backed structured kind diff_writer",
+        "convention": "file/content/change -> unified diff via ctx.llm",
         "name": "diff_writer"
       },
       {
@@ -88,7 +88,7 @@
         "name": "directory_input"
       },
       {
-        "convention": "LLM-backed structured kind directory_writer",
+        "convention": "task/shape -> virtual tree/notes via ctx.llm",
         "name": "directory_writer"
       },
       {
@@ -104,7 +104,7 @@
         "name": "ensemble"
       },
       {
-        "convention": "LLM-backed structured kind failure_classifier",
+        "convention": "step_result -> failure category/evidence via ctx.llm",
         "name": "failure_classifier"
       },
       {
@@ -156,7 +156,7 @@
         "name": "noop_fail_monty"
       },
       {
-        "convention": "LLM-backed structured kind pairwise_preference",
+        "convention": "a/b/criterion -> winner/rationale via ctx.llm",
         "name": "pairwise_preference"
       },
       {
@@ -164,7 +164,7 @@
         "name": "patch_applier_proxy"
       },
       {
-        "convention": "LLM-backed structured kind patch_set_writer",
+        "convention": "files/task -> patch list via ctx.llm",
         "name": "patch_set_writer"
       },
       {
@@ -212,11 +212,11 @@
         "name": "rlm_loop"
       },
       {
-        "convention": "LLM-backed structured kind rubric_grader",
+        "convention": "candidate/rubric -> scores/weighted_total via ctx.llm",
         "name": "rubric_grader"
       },
       {
-        "convention": "LLM-backed structured kind schema_designer",
+        "convention": "domain/examples -> JSON schema/rationale via ctx.llm",
         "name": "schema_designer"
       },
       {

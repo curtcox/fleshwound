@@ -1,4 +1,14 @@
-"""Built-in catalog kind: classifier."""
+"""Built-in catalog kind: classifier.
+
+One LLM call assigns a label from a fixed list with optional confidence and
+rationale extracted from the response.
+
+When to use: simple categorization or routing labels.
+
+Similar kinds: ``judge``; ``rubric_grader``; ``failure_classifier``.
+
+Prefer alternatives when: use ``judge`` for pass/fail; use ``rubric_grader`` for
+weighted multi-criterion grading; use ``failure_classifier`` for StepResult input."""
 
 from __future__ import annotations
 

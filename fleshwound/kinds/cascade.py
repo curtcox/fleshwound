@@ -1,4 +1,16 @@
-"""Built-in catalog kind: cascade."""
+"""Built-in catalog kind: cascade.
+
+Tries ``kinds[]`` in order via ``ctx.step``, stopping at the first ok result that
+satisfies an optional Monty ``stop_predicate``.
+
+When to use: fallback chains where failed attempts must refund budget for the
+next try.
+
+Similar kinds: ``retry_wrapper``; ``cond_dispatch``; ``ensemble``.
+
+Prefer alternatives when: use ``retry_wrapper`` for identical retries; use
+``cond_dispatch`` when input picks the kind upfront; use ``ensemble`` when every
+attempt's output matters."""
 
 from __future__ import annotations
 

@@ -1,4 +1,13 @@
-"""Built-in catalog kind: kind_chooser."""
+"""Built-in catalog kind: kind_chooser.
+
+One LLM call selects a catalog kind name for a task using rendered ``ctx.catalog``.
+
+When to use: planning/routing where execution happens in a separate parent step.
+
+Similar kinds: ``dynamic_dispatch``; ``meta_planner``; ``random_pick``.
+
+Prefer alternatives when: use ``dynamic_dispatch`` to choose and run together; use
+``meta_planner`` for multi-step plans."""
 
 from __future__ import annotations
 

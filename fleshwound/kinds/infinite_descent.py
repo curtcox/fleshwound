@@ -1,4 +1,14 @@
-"""Built-in catalog kind: infinite_descent."""
+"""Built-in catalog kind: infinite_descent.
+
+Recursively self-calls with shrinking budget until child allocation fails with
+``budget_denied``.
+
+When to use: confirm depth floor halts chains distinct from ``budget_exhausted``.
+
+Similar kinds: ``inherit_chain``; ``budget_hog``.
+
+Prefer alternatives when: use ``inherit_chain`` for explicit kind traces; use
+``budget_hog`` for exhaustion inside a leaf."""
 
 from __future__ import annotations
 

@@ -1,4 +1,14 @@
-"""Built-in catalog kind: function_map_writer."""
+"""Built-in catalog kind: function_map_writer.
+
+For each ``signatures`` entry, calls ``program_writer`` and returns generated
+sources keyed by name with ``missing`` tracking.
+
+When to use: generating many related Monty functions from signature specs.
+
+Similar kinds: ``program_writer``; ``function_map_editor``; ``directory_input``.
+
+Prefer alternatives when: use ``program_writer`` for one function; use
+``function_map_editor`` for incremental edits."""
 
 from __future__ import annotations
 

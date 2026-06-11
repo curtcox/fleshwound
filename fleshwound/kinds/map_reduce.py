@@ -1,4 +1,15 @@
-"""Built-in catalog kind: map_reduce."""
+"""Built-in catalog kind: map_reduce.
+
+Maps each item through ``map_kind`` sequentially, optionally reduces via
+``reduce_kind``; records per-item error indices.
+
+When to use: homogeneous fan-out where individual child failures should not abort
+the map.
+
+Similar kinds: ``dedup_then_map``; ``repo_walker``; ``pipeline``.
+
+Prefer alternatives when: use ``dedup_then_map`` for duplicate items; use
+``repo_walker`` for path-keyed fan-out; use ``pipeline`` for dependent stages."""
 
 from __future__ import annotations
 

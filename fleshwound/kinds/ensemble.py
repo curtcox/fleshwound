@@ -1,4 +1,15 @@
-"""Built-in catalog kind: ensemble."""
+"""Built-in catalog kind: ensemble.
+
+Runs ``inner_kind`` ``n`` times on the same input, then optionally aggregates ok
+values with one LLM call.
+
+When to use: diversity sampling with LLM aggregation when quality varies.
+
+Similar kinds: ``tournament``; ``map_reduce``; ``retry_wrapper``.
+
+Prefer alternatives when: use ``tournament`` for head-to-head competition; use
+``map_reduce`` for different per-item inputs; use ``retry_wrapper`` for redundant
+retries."""
 
 from __future__ import annotations
 

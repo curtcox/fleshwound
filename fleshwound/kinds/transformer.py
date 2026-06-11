@@ -1,4 +1,15 @@
-"""Built-in catalog kind: transformer."""
+"""Built-in catalog kind: transformer.
+
+Optional Monty preprocess, one ``ctx.step`` to ``inner_kind``, optional Monty
+postprocess on the result.
+
+When to use: reuse an existing kind with input/output adaptation without a new
+catalog entry.
+
+Similar kinds: ``monty_exec``; ``convention_adapter``; ``precondition_gate``.
+
+Prefer alternatives when: use ``convention_adapter`` for cross-convention LLM
+translation; use ``monty_exec`` when no child kind is needed."""
 
 from __future__ import annotations
 

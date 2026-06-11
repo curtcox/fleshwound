@@ -1,4 +1,14 @@
-"""Built-in catalog kind: patch_applier_proxy."""
+"""Built-in catalog kind: patch_applier_proxy.
+
+Pure-data simulation of patch application: validates paths/diffs and returns
+applied vs rejected lists without disk access.
+
+When to use: test patch shapes with caller-side real appliers.
+
+Similar kinds: ``patch_set_writer``; ``diff_writer``; ``function_map_editor``.
+
+Prefer alternatives when: use writer kinds to generate patches; caller owns FS
+mutation in v1."""
 
 from __future__ import annotations
 

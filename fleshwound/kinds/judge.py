@@ -1,4 +1,14 @@
-"""Built-in catalog kind: judge."""
+"""Built-in catalog kind: judge.
+
+One LLM call evaluates a candidate against prose criteria and returns pass/fail
+plus rationale.
+
+When to use: binary acceptance in ``refine_until`` and manual pipelines.
+
+Similar kinds: ``rubric_grader``; ``pairwise_preference``; ``classifier``.
+
+Prefer alternatives when: use ``rubric_grader`` for weighted scores; use
+``pairwise_preference`` in brackets; use ``classifier`` for label sets."""
 
 from __future__ import annotations
 

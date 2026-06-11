@@ -1,4 +1,14 @@
-"""Built-in catalog kind: catalog_self_test."""
+"""Built-in catalog kind: catalog_self_test.
+
+Runs minimal viable input through each catalog kind (or a subset) via ``ctx.step``
+and collects outcomes.
+
+When to use: broad regression sweeps with ``_minimal_input.py`` and Group E fixtures.
+
+Similar kinds: ``regression_canary``; ``kind_lister``; ``noop_fail``.
+
+Prefer alternatives when: use ``regression_canary`` for golden-hash determinism on
+one kind; use ``kind_lister`` for metadata only."""
 
 from __future__ import annotations
 

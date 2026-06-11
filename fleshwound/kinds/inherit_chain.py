@@ -1,4 +1,14 @@
-"""Built-in catalog kind: inherit_chain."""
+"""Built-in catalog kind: inherit_chain.
+
+Recursively calls itself with ``same_as_parent`` until depth bottoms out, building
+a trace of visited kind names.
+
+When to use: depth decrement, ``same_as_parent``, and ``budget_denied`` tests.
+
+Similar kinds: ``infinite_descent``; ``pipeline``.
+
+Prefer alternatives when: use ``infinite_descent`` for step-budget vs depth stress;
+use ``pipeline`` when each hop changes kind."""
 
 from __future__ import annotations
 

@@ -1,4 +1,14 @@
-"""Built-in catalog kind: budget_hog."""
+"""Built-in catalog kind: budget_hog.
+
+Burns one budget dimension (``tokens``, ``steps``, or ``tool_calls``) to zero,
+then attempts one more primitive call to observe ``budget_exhausted``.
+
+When to use: contract tests for mid-execution budget exhaustion at host boundaries.
+
+Similar kinds: ``infinite_descent``; ``always_host_error``; ``noop_fail``.
+
+Prefer alternatives when: use ``infinite_descent`` for depth-floor ``budget_denied``;
+use ``always_host_error`` for other codes."""
 
 from __future__ import annotations
 

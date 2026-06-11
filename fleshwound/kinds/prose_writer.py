@@ -1,4 +1,13 @@
-"""Built-in catalog kind: prose_writer."""
+"""Built-in catalog kind: prose_writer.
+
+One LLM call turns a task (and optional context) into prose text plus notes.
+
+When to use: unstructured natural-language generation without executable output.
+
+Similar kinds: ``program_writer``; ``conversation``.
+
+Prefer alternatives when: use ``program_writer`` for runnable code; use
+``conversation`` when carrying multi-turn history."""
 
 from __future__ import annotations
 

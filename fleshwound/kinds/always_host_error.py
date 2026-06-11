@@ -1,4 +1,15 @@
-"""Built-in catalog kind: always_host_error."""
+"""Built-in catalog kind: always_host_error.
+
+Test fixture that triggers a specific ``host_error.code`` via raise, malformed
+return, or budget denial depending on ``input.code``.
+
+When to use: exhaustive host-error-path regression with ``catalog_self_test``.
+
+Similar kinds: ``noop_fail`` / ``noop_fail_monty``; ``budget_hog``;
+``infinite_descent``.
+
+Prefer alternatives when: use ``noop_fail*`` for generic failures; use
+``budget_hog`` or ``infinite_descent`` for budget-specific behavior."""
 
 from __future__ import annotations
 

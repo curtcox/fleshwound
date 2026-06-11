@@ -1,4 +1,14 @@
-"""Built-in catalog kind: dedup_then_map."""
+"""Built-in catalog kind: dedup_then_map.
+
+Content-hashes each item, runs ``inner_kind`` once per unique hash, returns map
+plus per-position hash index.
+
+When to use: fan-out where many inputs collapse to few unique computations.
+
+Similar kinds: ``map_reduce``; ``content_hash_memo``; ``repo_walker``.
+
+Prefer alternatives when: use ``map_reduce`` when every item is distinct or a
+reduce step is needed."""
 
 from __future__ import annotations
 

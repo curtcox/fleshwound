@@ -1,4 +1,14 @@
-"""Built-in catalog kind: directory_input."""
+"""Built-in catalog kind: directory_input.
+
+Assembles prose context from a virtual ``tree`` and delegates to
+``program_writer`` with the caller's ``task``.
+
+When to use: repo-shaped tasks with caller-materialized file JSON.
+
+Similar kinds: ``program_writer``; ``repo_walker``; ``directory_writer``.
+
+Prefer alternatives when: use ``program_writer`` when context is already a dict;
+use ``repo_walker`` for per-file processing."""
 
 from __future__ import annotations
 

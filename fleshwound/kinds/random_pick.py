@@ -1,4 +1,13 @@
-"""Built-in catalog kind: random_pick."""
+"""Built-in catalog kind: random_pick.
+
+Delegates ``inner_input`` with ``default_policy="random"`` (seed-derived kind).
+
+When to use: §6.3 seed-stable random default resolution tests.
+
+Similar kinds: ``subset_pick``; ``dynamic_dispatch``; ``kind_chooser``.
+
+Prefer alternatives when: use ``subset_pick`` to constrain candidates; use
+``dynamic_dispatch`` for explicit or LLM choice."""
 
 from __future__ import annotations
 

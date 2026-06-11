@@ -1,4 +1,14 @@
-"""Built-in catalog kind: pipeline."""
+"""Built-in catalog kind: pipeline.
+
+Runs ``stages[]`` sequentially, threading each ok stage's ``value`` as the next
+input.
+
+When to use: fixed multi-step workflows with caller-defined kind order.
+
+Similar kinds: ``meta_planner``; ``chain_with_adapter``; ``transformer``.
+
+Prefer alternatives when: use ``meta_planner`` for LLM-defined plans; use
+``chain_with_adapter`` when conventions must be translated mid-pipeline."""
 
 from __future__ import annotations
 

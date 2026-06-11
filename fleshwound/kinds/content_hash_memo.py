@@ -1,4 +1,14 @@
-"""Built-in catalog kind: content_hash_memo."""
+"""Built-in catalog kind: content_hash_memo.
+
+Hashes ``(inner_kind, inner_input)``; returns cached value from caller ``memo`` or
+runs one child step and updates memo in the value.
+
+When to use: legal within-run memoization (cache explicit in input/output).
+
+Similar kinds: ``dedup_then_map``; ``retry_wrapper``; excluded cross-run ``cached``.
+
+Prefer alternatives when: use ``dedup_then_map`` for list fan-out dedup; omit memo
+when every call must be fresh."""
 
 from __future__ import annotations
 

@@ -1,4 +1,14 @@
-"""Built-in catalog kind: refine_until."""
+"""Built-in catalog kind: refine_until.
+
+Alternates ``inner_kind`` and ``judge_kind`` up to ``max_rounds``, stopping when
+verdict JSON contains ``"pass"``.
+
+When to use: iterative improvement with an explicit judge kind.
+
+Similar kinds: ``retry_wrapper``; ``rlm_loop``; ``tournament``.
+
+Prefer alternatives when: use ``retry_wrapper`` for transient failures; use
+``rlm_loop`` for richer action protocols; use ``ensemble`` for parallel drafts."""
 
 from __future__ import annotations
 

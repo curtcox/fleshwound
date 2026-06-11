@@ -1,4 +1,14 @@
-"""Built-in catalog kind: echo."""
+"""Built-in catalog kind: echo.
+
+Returns the entire ``input`` unchanged; the simplest successful step.
+
+When to use: identity steps, envelope smoke tests, and inner kind for
+``budget_hog`` (steps target).
+
+Similar kinds: ``constant``; ``monty_exec``.
+
+Prefer alternatives when: use ``constant`` for explicit ``{"value": ...}`` input;
+use ``monty_exec`` for computed returns."""
 
 from __future__ import annotations
 

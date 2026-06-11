@@ -1,4 +1,14 @@
-"""Built-in catalog kind: function_map_editor."""
+"""Built-in catalog kind: function_map_editor.
+
+Pure-data transform applying remove/add/update edits to a function map with
+explicit ``removed`` / ``added`` keys.
+
+When to use: incremental map maintenance without regenerating unchanged functions.
+
+Similar kinds: ``function_map_writer``; ``patch_set_writer``; ``convention_adapter``.
+
+Prefer alternatives when: use ``function_map_writer`` for greenfield generation; use
+LLM kinds when edits need semantic reasoning."""
 
 from __future__ import annotations
 

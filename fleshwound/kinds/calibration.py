@@ -1,4 +1,14 @@
-"""Built-in catalog kind: calibration."""
+"""Built-in catalog kind: calibration.
+
+Runs ``grader_kind`` on each labeled example, compares predicted scores to
+``gold_score``, returns agreement and bias stats.
+
+When to use: meta-evaluation of graders; fan-out budget-sizing exercises.
+
+Similar kinds: ``regression_canary``; ``catalog_self_test``; ``rubric_grader``.
+
+Prefer alternatives when: use ``regression_canary`` for single golden hashes; use
+``rubric_grader`` directly when not comparing to gold labels."""
 
 from __future__ import annotations
 

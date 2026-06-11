@@ -1,4 +1,15 @@
-"""Built-in catalog kind: score_aggregator."""
+"""Built-in catalog kind: score_aggregator.
+
+Pure Monty reduction aggregating ``{score, weight}`` rows by policy
+(``weighted_mean``, ``median``, or ``min``).
+
+When to use: deterministic combine step after ``rubric_grader`` without inline
+parent math.
+
+Similar kinds: ``rubric_grader``; ``calibration``; ``monty_exec``.
+
+Prefer alternatives when: use ``rubric_grader`` when scores do not exist yet; use
+``monty_exec`` for custom policies."""
 
 from __future__ import annotations
 

@@ -1,4 +1,14 @@
-"""Built-in catalog kind: repo_walker."""
+"""Built-in catalog kind: repo_walker.
+
+Filters virtual ``tree`` paths with a Monty ``predicate``, then runs
+``per_file_kind`` once per match.
+
+When to use: large fan-out over files with separate budget per match.
+
+Similar kinds: ``map_reduce``; ``dedup_then_map``; ``pipeline``.
+
+Prefer alternatives when: use ``map_reduce`` for homogeneous lists; size child
+budgets carefully to avoid parent ``budget_denied``."""
 
 from __future__ import annotations
 

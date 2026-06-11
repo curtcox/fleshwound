@@ -1,4 +1,16 @@
-"""Built-in catalog kind: adversarial_loop."""
+"""Built-in catalog kind: adversarial_loop.
+
+Alternates ``attack_generator`` and ``target_kind`` up to ``max_rounds``, stopping
+on the first target ``host_error`` or when a success predicate matches.
+
+When to use: end-to-end red-team loops; any kind can be both attacker parent and
+victim child.
+
+Similar kinds: ``attack_generator`` (one crafted input); ``refine_until`` (benign
+iterate/judge); ``cascade`` (try kinds, not adaptive attacks).
+
+Prefer alternatives when: use ``attack_generator`` alone for one-shot inputs; use
+``refine_until`` for quality iteration; use fixed pytest inputs for stable CI."""
 
 from __future__ import annotations
 

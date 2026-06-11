@@ -1,4 +1,13 @@
-"""Built-in catalog kind: retry_wrapper."""
+"""Built-in catalog kind: retry_wrapper.
+
+Calls ``inner_kind`` up to ``max_attempts`` until ``outcome == "ok"``.
+
+When to use: transient failures where refund semantics must allow retries.
+
+Similar kinds: ``cascade``; ``refine_until``; ``ensemble``.
+
+Prefer alternatives when: use ``cascade`` for different fallback kinds; use
+``refine_until`` when each round changes the candidate."""
 
 from __future__ import annotations
 

@@ -1,4 +1,17 @@
-"""Built-in catalog kind: program_writer."""
+"""Built-in catalog kind: program_writer.
+
+LLM generates Monty-subset Python from a task, executes it via ``monty_run``, and
+returns ``{status, program, notes}``. Prompt asset:
+``program_writer_prompt.md``.
+
+When to use: primary budget-bounded program-writing path on Monty.
+
+Similar kinds: ``prose_writer``; ``monty_exec``; ``function_map_writer``;
+``directory_input``; ``rlm_loop``.
+
+Prefer alternatives when: use ``prose_writer`` for non-code; use ``monty_exec`` when
+code is known; use ``function_map_writer`` for many functions; use ``rlm_loop`` for
+multi-iteration agentic reasoning."""
 
 from __future__ import annotations
 

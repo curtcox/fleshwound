@@ -1,4 +1,13 @@
-"""Built-in catalog kind: tournament."""
+"""Built-in catalog kind: tournament.
+
+Single-elimination bracket via repeated pairwise ``judge_kind`` comparisons.
+
+When to use: pick the best among N fixed candidates via pairwise comparison.
+
+Similar kinds: ``ensemble``; ``pairwise_preference``; ``rubric_grader``.
+
+Prefer alternatives when: use ``ensemble`` for stochastic samples; use
+``rubric_grader`` for full numeric scoring of each candidate."""
 
 from __future__ import annotations
 

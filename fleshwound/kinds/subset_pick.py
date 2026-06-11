@@ -1,4 +1,13 @@
-"""Built-in catalog kind: subset_pick."""
+"""Built-in catalog kind: subset_pick.
+
+Delegates with ``random_from_subset`` default policy over listed kind names.
+
+When to use: constrained random dispatch and §6.3 edge-case tests.
+
+Similar kinds: ``random_pick``; ``cond_dispatch``; ``dynamic_dispatch``.
+
+Prefer alternatives when: use ``random_pick`` for full-catalog random; use
+``cond_dispatch`` for deterministic rules."""
 
 from __future__ import annotations
 

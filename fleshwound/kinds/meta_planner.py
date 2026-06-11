@@ -1,4 +1,15 @@
-"""Built-in catalog kind: meta_planner."""
+"""Built-in catalog kind: meta_planner.
+
+One LLM call produces a JSON plan of ``{kind, input}`` steps, then executes them
+sequentially.
+
+When to use: LLM-driven workflows where decomposition and kind choice are both
+model decisions.
+
+Similar kinds: ``pipeline``; ``dynamic_dispatch``; ``rlm_loop``.
+
+Prefer alternatives when: use ``pipeline`` for fixed stages; use ``dynamic_dispatch``
+for one hop; use ``rlm_loop`` when intermediate observations drive next actions."""
 
 from __future__ import annotations
 

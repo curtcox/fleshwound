@@ -1,4 +1,13 @@
-"""Built-in catalog kind: noop_fail_monty."""
+"""Built-in catalog kind: noop_fail_monty.
+
+Runs Monty code that deliberately raises, producing ``monty_error``.
+
+When to use: contract tests for Monty executors vs host Python failures.
+
+Similar kinds: ``noop_fail``; ``monty_exec``.
+
+Prefer alternatives when: use ``noop_fail`` for non-Monty executors; use
+``monty_exec`` for controlled Monty behavior."""
 
 from __future__ import annotations
 

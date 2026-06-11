@@ -1,4 +1,14 @@
-"""Built-in catalog kind: clarify_then_delegate."""
+"""Built-in catalog kind: clarify_then_delegate.
+
+Optionally asks the user one clarifying question, then delegates the enriched
+task to ``child_kind``.
+
+When to use: human clarification before expensive recursion.
+
+Similar kinds: ``ask_user_only``; ``dynamic_dispatch``; ``program_writer``.
+
+Prefer alternatives when: use ``ask_user_only`` in isolation; use ``rlm_loop`` for
+multi-turn agentic clarification."""
 
 from __future__ import annotations
 

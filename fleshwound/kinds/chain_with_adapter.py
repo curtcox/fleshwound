@@ -1,4 +1,14 @@
-"""Built-in catalog kind: chain_with_adapter."""
+"""Built-in catalog kind: chain_with_adapter.
+
+Three-step composition: ``first_kind``, then ``convention_adapter``, then
+``second_kind`` on the adapted input.
+
+When to use: reference pattern for catalog-native multi-kind pipelines.
+
+Similar kinds: ``pipeline``; ``convention_adapter``; ``dynamic_dispatch``.
+
+Prefer alternatives when: use ``pipeline`` when conventions align; use
+``meta_planner`` when the stage list should be LLM-generated."""
 
 from __future__ import annotations
 
