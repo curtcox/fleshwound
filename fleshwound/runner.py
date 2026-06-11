@@ -57,18 +57,15 @@ class RunOptions:
             child overrides it via ``step(..., provider=...)``. Token usage from
             each call is charged to the active budget.
         default_policy: Kind-resolution policy applied whenever ``step()`` or
-            ``run_step()`` is called without ``kind=``. Supported values:
-
-            - ``"same_as_parent"`` (default) — use the calling step's kind.
-              Cannot resolve at the root (``run_step(kind=None)``).
-            - ``"random"`` — pick uniformly from the entire catalog.
-            - ``{"random_from_subset": [names...]}`` — pick uniformly from the
-              named subset (deduped). Empty subset → ``unresolvable_default``;
-              unknown name → ``unknown_kind``.
-
-            Inherited by children; overridable per child via
-            ``step(..., default_policy=...)``. Random picks are deterministic
-            via :func:`derive_seed` using :attr:`seed` and the child's budget id.
+            ``run_step()`` is called without ``kind=``. One of
+            ``"same_as_parent"`` (default; uses the caller's kind, fails at
+            root), ``"random"`` (uniform catalog pick), or
+            ``{"random_from_subset": [names...]}`` (uniform pick from a deduped
+            subset; empty subset yields ``unresolvable_default``, unknown names
+            yield ``unknown_kind``). Inherited by children; overridable per
+            child via ``step(..., default_policy=...)``. Random picks are
+            deterministic via :func:`derive_seed` using :attr:`seed` and the
+            child's budget id.
         seed: Run-wide seed for deterministic random default-policy picks.
             Combined with each child's ``budget_id`` through :func:`derive_seed`
             to derive per-allocation RNG state. Does not affect the provider or
