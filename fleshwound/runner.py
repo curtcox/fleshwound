@@ -35,7 +35,60 @@ HOST_ERROR_CODES = {
 
 @dataclass(frozen=True)
 class RunOptions:
-    """Run-wide configuration threaded through the recursion tree."""
+    """Run-wide configuration threaded through the recursion tree.
+
+    Passed to :func:`run_step` as ``options=`` and inherited by every step in
+    the run. Individual fields may be overridden for a child's subtree via the
+    matching kwargs on :meth:`RunContext.step` (``default_policy``, ``provider``,
+    ``ask_user`` only).
+
+    Attributes:
+        budget: Root budget envelope. A :class:`~fleshwound.budget.BudgetLimit` or
+            dict with keys ``tokens``, ``steps``, ``depth``, and ``tool_calls``.
+            Used only when :attr:`ledger` is omitted; in that case a new root
+            :class:`~fleshwound.budget.BudgetLedger` is created from this value
+            (defaulting to :data:`DEFAULT_BUDGET` when both are omitted). Child
+            budgets are carved out of this root by each ``ctx.step()`` call.
+        provider: LLM backend for the run. Accepts a :class:`~fleshwound.provider.ModelProvider`
+            (``.generate(prompt)``) or a bare ``Callable[[str], str]``, which is
+            wrapped in :class:`~fleshwound.provider.CallableProvider`. When
+            ``None``, normalizes to a no-op provider that returns empty text.
+            Every step uses this provider for :meth:`RunContext.llm` unless a
+            child overrides it via ``step(..., provider=...)``. Token usage from
+            each call is charged to the active budget.
+        default_policy: Kind-resolution policy applied whenever ``step()`` or
+            ``run_step()`` is called without ``kind=``. Supported values:
+
+            - ``"same_as_parent"`` (default) — use the calling step's kind.
+              Cannot resolve at the root (``run_step(kind=None)``).
+            - ``"random"`` — pick uniformly from the entire catalog.
+            - ``{"random_from_subset": [names...]}`` — pick uniformly from the
+              named subset (deduped). Empty subset → ``unresolvable_default``;
+              unknown name → ``unknown_kind``.
+
+            Inherited by children; overridable per child via
+            ``step(..., default_policy=...)``. Random picks are deterministic
+            via :func:`derive_seed` using :attr:`seed` and the child's budget id.
+        seed: Run-wide seed for deterministic random default-policy picks.
+            Combined with each child's ``budget_id`` through :func:`derive_seed`
+            to derive per-allocation RNG state. Does not affect the provider or
+            other sources of variation.
+        ask_user: Optional human callback ``(question: str) -> str``. When
+            ``None``, ``ctx.ask_user`` is unavailable to executors (kinds must
+            handle absence). Not charged against any budget dimension; may block
+            indefinitely. Inherited by children; overridable per child via
+            ``step(..., ask_user=...)``.
+        catalog: Kind registry override. When ``None``, uses the built-in
+            registry (:data:`~fleshwound.catalog.catalog`). Primarily for
+            testing or advanced callers that inject local entries. Static for
+            the run; exposed read-only to executors as ``ctx.catalog``.
+        ledger: Pre-built budget ledger. When ``None``, a new root ledger is
+            created from :attr:`budget` (or :data:`DEFAULT_BUDGET`). When
+            provided, :attr:`budget` is ignored for ledger construction.
+            Primarily for testing (inspect events, pre-seed state) or advanced
+            callers. The same ledger instance is threaded through the entire
+            recursion tree.
+    """
 
     budget: BudgetLimit | dict[str, int] | None = None
     provider: ModelProvider | Callable[[str], str] | None = None
