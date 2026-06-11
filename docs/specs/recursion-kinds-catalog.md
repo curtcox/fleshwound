@@ -39,8 +39,16 @@ For each kind:
 - **input** — any (ignored).
 - **value** — never reached.
 - **charges** — n/a.
-- **uses** — none; deliberately raises.
+- **uses** — none; deliberately raises in host Python.
 - **stresses** — §4 host safety net: uncaught Python exception in a non-Monty executor → `host_error{code: "executor_error"}`. Companion `noop_fail_monty` raises inside Monty → `monty_error`. Both must round-trip without crashing the host.
+
+### `noop_fail_monty`
+
+- **input** — any (ignored).
+- **value** — never reached.
+- **charges** — n/a.
+- **uses** — Monty executor; deliberately raises inside Monty.
+- **stresses** — §4 host safety net: Monty exception → `monty_error` (companion to `noop_fail`, which raises in host Python → `executor_error`).
 
 ---
 
@@ -465,6 +473,18 @@ For each kind:
 - **value** — `{"results_by_hash": {hash_str: StepResult}, "items_to_hash": [str]}`.
 - **uses** — hashes each item, calls `ctx.step(inner_kind, ...)` exactly once per unique hash, returns a map keyed by hash plus a parallel list mapping each input position to its hash.
 - **stresses** — `map_reduce`'s sibling for the case where many inputs collapse to few unique computations; content-hash dedup is the only safe memoization in the deterministic model.
+
+---
+
+## Group Q — RLM iterative reasoning
+
+### `rlm_loop`
+
+- **input** — `{"task": str, "context": dict, "max_iterations": int, "answer_schema": Any|null, "child_kind": str|null, "child_request": BudgetRequest, "system_hint": str, "strict_protocol": bool}` — see `rlm-loop-kind.md` for the full schema and field semantics.
+- **value** — `{"status": "complete"|"partial"|"error", "answer": Any|null, "iterations": int, "trace": [...], "state": {"task", "context", "vars", "trace"}, "notes": str}`.
+- **charges** — tokens per iteration (one `ctx.llm` per cycle); steps/tokens per `step` action inside the loop.
+- **uses** — `ctx.llm`, `ctx.step`, `ctx.catalog`, `ctx.budget`.
+- **stresses** — structured iterative recursion with an inspectable trace; the RLM action protocol (`rlm-action-protocol.md`); multi-turn state carried in `value`, not host memory; composes with any child kind via `step` actions. Full specification: `rlm-loop-kind.md`.
 
 ---
 

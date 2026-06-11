@@ -17,10 +17,12 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import re
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 from collections import Counter
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -42,8 +44,16 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # Narrative docs published under guide/.
 GUIDE_DOCS = ["README.md", "docs/history/rlm_design_conversation.md", "fleshwound/kinds/program_writer_prompt.md"]
 
+CATALOG_DOC = REPO_ROOT / "docs" / "specs" / "recursion-kinds-catalog.md"
+
+# Per-kind pages may append a dedicated spec beyond the catalog section.
+EXTRA_KIND_DOCS: dict[str, Path] = {
+    "rlm_loop": REPO_ROOT / "docs" / "specs" / "rlm-loop-kind.md",
+}
+
 NAV = [
     ("Home", "index.html"),
+    ("Kinds", "kinds/index.html"),
     ("CI", "ci/index.html"),
     ("Metrics", "metrics.html"),
     ("API", "api/index.html"),
@@ -446,6 +456,112 @@ def render_markdown(text: str) -> str:
     )
 
 
+@dataclass(frozen=True)
+class KindDoc:
+    name: str
+    group: str
+    section: str
+
+
+def parse_catalog_kind_docs(catalog_path: Path) -> dict[str, KindDoc]:
+    """Extract per-kind sections from ``recursion-kinds-catalog.md``."""
+    try:
+        text = catalog_path.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        return {}
+
+    group = ""
+    docs: dict[str, KindDoc] = {}
+    for line in text.splitlines():
+        group_match = re.match(r"^## Group ([A-Z]) — (.+)$", line)
+        if group_match:
+            group = f"Group {group_match.group(1)} — {group_match.group(2)}"
+            continue
+        kind_match = re.match(r"^### `([^`]+)`\s*$", line)
+        if kind_match:
+            docs[kind_match.group(1)] = KindDoc(kind_match.group(1), group, "")
+            continue
+        if docs:
+            last = next(reversed(docs))
+            entry = docs[last]
+            docs[last] = KindDoc(entry.name, entry.group, entry.section + line + "\n")
+
+    return {
+        name: KindDoc(name, entry.group, entry.section.strip())
+        for name, entry in docs.items()
+        if entry.section.strip()
+    }
+
+
+def load_registered_kinds() -> dict[str, tuple[str, bool]]:
+    import fleshwound.kinds  # noqa: F401
+
+    from fleshwound.catalog import catalog
+
+    return {
+        name: (entry.convention, entry.monty) for name, entry in catalog.entries.items()
+    }
+
+
+def render_kinds(out: Path) -> int:
+    """Render per-kind pages and a kinds index. Returns the number of kinds published."""
+    kinds_dir = out / "kinds"
+    kinds_dir.mkdir(parents=True, exist_ok=True)
+
+    catalog_docs = parse_catalog_kind_docs(CATALOG_DOC)
+    registered = load_registered_kinds()
+
+    rows: list[list[str]] = []
+    for name in sorted(registered):
+        convention, monty = registered[name]
+        doc = catalog_docs.get(name)
+        group = doc.group if doc else ""
+        extra = EXTRA_KIND_DOCS.get(name)
+        extra_text = ""
+        if extra and extra.exists():
+            try:
+                extra_text = extra.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                extra_text = ""
+
+        body_parts = [
+            f"<p><strong>Convention:</strong> {html.escape(convention)}</p>",
+            f"<p><strong>Group:</strong> {html.escape(group or '—')}</p>",
+        ]
+        if monty:
+            body_parts.append("<p><strong>Monty executor:</strong> yes</p>")
+        if doc:
+            body_parts.append(
+                f'<article class="prose">{render_markdown(doc.section)}</article>'
+            )
+        else:
+            body_parts.append("<p class='muted'>No catalog section found.</p>")
+        if extra_text:
+            body_parts.append(
+                "<h2>Extended specification</h2>"
+                f'<article class="prose">{render_markdown(extra_text)}</article>'
+            )
+
+        (kinds_dir / f"{name}.html").write_text(
+            page(f"`{name}`", "\n".join(body_parts), prefix="../")
+        )
+        rows.append(
+            [
+                f'<a href="kinds/{html.escape(name)}.html"><code>{html.escape(name)}</code></a>',
+                html.escape(convention),
+                html.escape(group or "—"),
+            ]
+        )
+
+    index_body = (
+        f"<p>{len(registered)} built-in catalog entries. "
+        f"Source: <a href=\"../docs/recursion-kinds-catalog.html\">Recursion Kinds Catalog</a>.</p>"
+        + table(["Kind", "Convention", "Group"], rows)
+    )
+    (kinds_dir / "index.html").write_text(page("Kinds", index_body, prefix="../"))
+    return len(registered)
+
+
 def render_doc_collection(
     sources: list[Path], out_subdir: Path, prefix: str, out_root: Path
 ) -> list[tuple[str, str]]:
@@ -496,6 +612,7 @@ def render_home(
     metrics: dict,
     spec_links: list[tuple[str, str]],
     guide_links: list[tuple[str, str]],
+    kind_count: int,
     has_api: bool,
 ) -> None:
     chips = "\n".join(
@@ -518,6 +635,12 @@ def render_home(
         '<p><a href="api/index.html">Browse the fleshwound API →</a></p>'
         if has_api
         else "<p class='muted'>API reference unavailable in this build.</p>"
+    )
+
+    body += "<h2>Kinds</h2>"
+    body += (
+        f"<p>{kind_count} built-in catalog entries with per-kind documentation. "
+        f'<a href="kinds/index.html">Browse all kinds →</a></p>'
     )
 
     def link_list(links):
@@ -575,9 +698,11 @@ def main() -> int:
     guide_sources = [REPO_ROOT / name for name in GUIDE_DOCS]
     guide_links = render_doc_collection(guide_sources, out / "guide", "../", out)
 
+    kind_count = render_kinds(out)
+
     has_api = copy_api(args.api, out)
 
-    render_home(out, ci, metrics, spec_links, guide_links, has_api)
+    render_home(out, ci, metrics, spec_links, guide_links, kind_count, has_api)
 
     print(f"Site written to {out}/ ({metrics['files']} files, {metrics['loc']} LOC).")
     return 0
