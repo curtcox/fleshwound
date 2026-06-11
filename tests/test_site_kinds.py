@@ -34,10 +34,21 @@ def test_site_publishes_per_kind_pages(tmp_path: Path) -> None:
     (reports / "junit.xml").write_text(
         '<?xml version="1.0"?><testsuite tests="0" failures="0" errors="0" skipped="0"></testsuite>'
     )
-    (reports / "coverage.json").write_text('{"totals": {"percent_covered": 0.0}, "files": {}}')
+    (reports / "coverage.json").write_text(
+        '{"totals": {"percent_covered": 0.0}, "files": {}}'
+    )
 
     subprocess.run(
-        [sys.executable, "tools/build_site.py", "--reports", str(reports), "--out", str(out), "--api", "api"],
+        [
+            sys.executable,
+            "tools/build_site.py",
+            "--reports",
+            str(reports),
+            "--out",
+            str(out),
+            "--api",
+            "api",
+        ],
         cwd=REPO_ROOT,
         check=True,
     )

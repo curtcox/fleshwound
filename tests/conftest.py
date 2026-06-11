@@ -29,4 +29,3 @@ def assert_host_error(result, code=None):
     if code is not None:
         assert result["host_error"]["code"] == code, result
     return result["host_error"]
-

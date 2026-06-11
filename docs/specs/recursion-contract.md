@@ -17,26 +17,36 @@ Everything else — the meaning of the input value, the shape of the step's valu
 ## 2. Public entry point
 
 ```python
+@dataclass(frozen=True)
+class RunOptions:
+    budget: BudgetLimit | None = None
+    provider: ModelProvider | None = None
+    default_policy: DefaultPolicy = "same_as_parent"
+    seed: int = 0
+    ask_user: Callable[[str], str] | None = None
+    catalog: Catalog | None = None
+    ledger: BudgetLedger | None = None
+
+
 def run_step(
     input: Any,
-    budget: BudgetLimit,
-    provider: ModelProvider,
     *,
     kind: str | None = None,
-    default_policy: DefaultPolicy = "same_as_parent",
-    seed: int,
-    ask_user: Callable[[str], str] | None = None,
+    options: RunOptions | None = None,
 ) -> StepResult:
     ...
 ```
 
 - `input` — any JSON-serializable value. The host does not inspect it.
-- `budget` — root `BudgetLimit` (a 4-field dict; see §5).
-- `provider` — model provider used by every step in the run that does not override it.
 - `kind` — selects the root step's catalog entry. If omitted, the default-resolution policy is used; in that case the policy must be able to resolve without a parent (i.e. not `"same_as_parent"`).
-- `default_policy` — policy applied whenever a step calls `step()` without `kind=`. See §6.3.
-- `seed` — required. Used to deterministically derive per-step randomness (for random default policies).
-- `ask_user` — human callback. If `None`, `ask_user` is not bound in the Monty namespace.
+- `options` — run-wide configuration for the entire recursion tree. When omitted, defaults apply (`RunOptions()`). Fields:
+  - `budget` — root `BudgetLimit` (a 4-field dict; see §5). Used only when `ledger` is omitted.
+  - `provider` — model provider used by every step in the run that does not override it.
+  - `default_policy` — policy applied whenever a step calls `step()` without `kind=`. See §6.3.
+  - `seed` — used to deterministically derive per-step randomness (for random default policies).
+  - `ask_user` — human callback. If `None`, `ask_user` is not bound in the Monty namespace.
+  - `catalog` — catalog override (testing and advanced callers). Defaults to the built-in registry.
+  - `ledger` — pre-built budget ledger (testing and advanced callers). When omitted, a new root ledger is created from `budget`.
 
 Returns a `StepResult` envelope (§4).
 

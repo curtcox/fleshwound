@@ -9,37 +9,29 @@ The test fails unless:
 """
 
 from __future__ import annotations
-
 import os
 import stat
 import subprocess
 import sys
 from pathlib import Path
-
 import pytest
-
 from fleshwound.fake_llm import fake_llm
 from fleshwound.provider import CallableProvider
-from fleshwound.runner import run_step
+from fleshwound.runner import RunOptions, run_step
 
-
-TASK = (
-    "Write a doctor script for fleshwound (a bash script) that verifies the two "
-    "pieces required to run fleshwound are available: Monty (the pydantic_monty "
-    "Python package) and an LLM provider (an API key env var). Exit 0 if both "
-    "are present, non-zero otherwise."
-)
+TASK = "Write a doctor script for fleshwound (a bash script) that verifies the two pieces required to run fleshwound are available: Monty (the pydantic_monty Python package) and an LLM provider (an API key env var). Exit 0 if both are present, non-zero otherwise."
 
 
 @pytest.fixture(scope="module")
 def doctor_script(tmp_path_factory) -> Path:
     result = run_step(
         {"task": TASK, "context": None, "output_schema": None},
-        provider=CallableProvider(fake_llm),
         kind="program_writer",
+        options=RunOptions(provider=CallableProvider(fake_llm)),
     )
-
-    assert isinstance(result, dict), f"runner did not return an envelope dict: {result!r}"
+    assert isinstance(result, dict), (
+        f"runner did not return an envelope dict: {result!r}"
+    )
     assert result.get("outcome") == "ok", f"step host failed: {result!r}"
     value = result.get("value")
     assert isinstance(value, dict), f"step value is not a dict: {result!r}"
@@ -53,7 +45,6 @@ def doctor_script(tmp_path_factory) -> Path:
         or "OPENAI_API_KEY" in program
         or "FLESHWOUND_FAKE_LLM" in program
     ), "doctor must check for an LLM provider env var"
-
     path = tmp_path_factory.mktemp("doctor") / "doctor.sh"
     path.write_text(program)
     path.chmod(path.stat().st_mode | stat.S_IXUSR)
@@ -64,22 +55,14 @@ _LLM_KEYS = ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "FLESHWOUND_FAKE_LLM")
 
 
 def _base_env() -> dict[str, str]:
-    # Start from the real env (so bash, python3, PATH are found) and strip
-    # any pre-existing LLM provider vars so tests are deterministic.
     env = {k: v for k, v in os.environ.items() if k not in _LLM_KEYS}
-    # Ensure the test's interpreter is the one bash picks up as `python3`,
-    # so `import pydantic_monty` resolves against our installed venv.
     env["PATH"] = f"{Path(sys.executable).parent}{os.pathsep}{env.get('PATH', '')}"
     return env
 
 
 def _run_doctor(script: Path, env: dict[str, str]) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["bash", str(script)],
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=30,
+        ["bash", str(script)], env=env, capture_output=True, text=True, timeout=30
     )
 
 
@@ -95,7 +78,7 @@ def test_doctor_passes_when_environment_is_healthy(doctor_script: Path) -> None:
 
 
 def test_doctor_fails_when_llm_provider_missing(doctor_script: Path) -> None:
-    env = _base_env()  # _base_env() strips all LLM provider vars
+    env = _base_env()
     proc = _run_doctor(doctor_script, env)
     assert proc.returncode != 0, (
         f"doctor should fail without an LLM env var\nstdout:\n{proc.stdout}"

@@ -22,9 +22,13 @@ class FakeProvider:
             if re.search(pattern, prompt, re.S):
                 if isinstance(result, ModelTextResult):
                     return result
-                return ModelTextResult(str(result), Usage(prompt_tokens=len(prompt.split())))
+                return ModelTextResult(
+                    str(result), Usage(prompt_tokens=len(prompt.split()))
+                )
         raise FakeProviderUnmatched(prompt)
 
 
-def text_result(text: str, prompt_tokens: int = 1, completion_tokens: int = 1) -> ModelTextResult:
+def text_result(
+    text: str, prompt_tokens: int = 1, completion_tokens: int = 1
+) -> ModelTextResult:
     return ModelTextResult(text, Usage(prompt_tokens, completion_tokens))

@@ -876,7 +876,7 @@ to reduce token-heavy outputs in production.
 After Phases 1 and 2, a caller should be able to run:
 
 ```python
-from fleshwound.runner import run_step
+from fleshwound.runner import RunOptions, run_step
 from fleshwound.provider import CallableProvider
 
 provider = CallableProvider(lambda prompt: '{"protocol":"fleshwound-rlm-action/1","action":"answer","value":{"ok":true}}')
@@ -885,12 +885,14 @@ result = run_step(
     {
         "task": "Solve the problem.",
         "context": {"x": 1},
-    "max_iterations": 4,
+        "max_iterations": 4,
     },
-    {"tokens": 10000, "steps": 16, "depth": 4, "tool_calls": 4},
-    provider,
     kind="rlm_loop",
-    seed=0,
+    options=RunOptions(
+        budget={"tokens": 10000, "steps": 16, "depth": 4, "tool_calls": 4},
+        provider=provider,
+        seed=0,
+    ),
 )
 ```
 

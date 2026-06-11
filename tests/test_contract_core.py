@@ -1,12 +1,9 @@
 from __future__ import annotations
-
 import pytest
-
 from fleshwound.budget import BudgetLedger
 from fleshwound.catalog import Catalog
 from fleshwound.provider import CallableProvider, ModelTextResult, Usage
-from fleshwound.runner import run_step
-
+from fleshwound.runner import RunOptions, run_step
 from conftest import assert_host_error, assert_ok
 
 
@@ -54,36 +51,59 @@ def test_catalog_registration_and_duplicate_rejection():
 
 def test_constant_echo_and_failure_envelopes():
     budget = {"tokens": 0, "steps": 3, "depth": 2, "tool_calls": 0}
-    assert_ok(run_step({"value": {"a": 1}}, budget, provider(), kind="constant")) == {"a": 1}
-    assert_ok(run_step(["x"], budget, provider(), kind="echo")) == ["x"]
-    assert_host_error(run_step({}, budget, provider(), kind="noop_fail"), "executor_error")
+    assert_ok(
+        run_step(
+            {"value": {"a": 1}},
+            kind="constant",
+            options=RunOptions(budget=budget, provider=provider()),
+        )
+    ) == {"a": 1}
+    assert_ok(
+        run_step(
+            ["x"], kind="echo", options=RunOptions(budget=budget, provider=provider())
+        )
+    ) == ["x"]
+    assert_host_error(
+        run_step(
+            {}, kind="noop_fail", options=RunOptions(budget=budget, provider=provider())
+        ),
+        "executor_error",
+    )
 
 
 def test_llm_charges_usage_and_returns_value():
     result = run_step(
         {"task": "say hi", "context": None},
-        {"tokens": 5, "steps": 2, "depth": 2, "tool_calls": 0},
-        provider("hi", Usage(2, 2)),
         kind="prose_writer",
+        options=RunOptions(
+            budget={"tokens": 5, "steps": 2, "depth": 2, "tool_calls": 0},
+            provider=provider("hi", Usage(2, 2)),
+        ),
     )
     assert assert_ok(result)["text"] == "hi"
 
 
 def test_unknown_kind_and_unresolvable_default_are_host_errors():
     budget = {"tokens": 0, "steps": 2, "depth": 2, "tool_calls": 0}
-    assert_host_error(run_step({}, budget, provider(), kind="missing"), "unknown_kind")
-    assert_host_error(run_step({}, budget, provider(), kind=None), "unresolvable_default")
+    assert_host_error(
+        run_step(
+            {}, kind="missing", options=RunOptions(budget=budget, provider=provider())
+        ),
+        "unknown_kind",
+    )
+    assert_host_error(
+        run_step({}, kind=None, options=RunOptions(budget=budget, provider=provider())),
+        "unresolvable_default",
+    )
 
 
 def test_default_policy_resolution_is_recorded_on_allocate_child_event():
     ledger = BudgetLedger({"tokens": 0, "steps": 4, "depth": 3, "tool_calls": 0})
     result = run_step(
         {"inner_input": {"value": "picked"}, "subset": ["constant"]},
-        provider=provider(),
         kind="subset_pick",
-        ledger=ledger,
+        options=RunOptions(provider=provider(), ledger=ledger),
     )
-
     assert assert_ok(result)["result"]["value"] == "picked"
     allocations = [event for event in ledger.events if event.kind == "allocate_child"]
     assert len(allocations) == 1

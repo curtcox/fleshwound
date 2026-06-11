@@ -198,13 +198,9 @@ Public entry point:
 ```python
 def run_step(
     input: Any,                              # opaque JSON value
-    budget: BudgetLimit,                     # not BudgetRequest; root has no parent
-    provider: ModelProvider,
     *,
     kind: str | None = None,                 # required if default_policy cannot resolve at root
-    default_policy: DefaultPolicy = "same_as_parent",
-    seed: int,                               # required for deterministic randomness
-    ask_user: Callable[[str], str] | None = None,
+    options: RunOptions | None = None,       # budget, provider, seed, default_policy, ask_user, ...
 ) -> StepResult:                             # {outcome, value, host_error}
     ...
 ```
@@ -280,7 +276,7 @@ Implement:
 
 Acceptance criteria:
 
-- `run_step(..., provider=LarqlProvider(...))` works;
+- `run_step(..., options=RunOptions(provider=LarqlProvider(...)))` works;
 - Larql can call Fleshwound during the generation loop;
 - final text returns to Monty `llm(...)`.
 
