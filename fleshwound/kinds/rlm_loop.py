@@ -7,7 +7,6 @@ import re
 from typing import Any
 
 from ..catalog import register
-from ._shared import request
 
 RLM_ACTION_PROTOCOL = "fleshwound-rlm-action/1"
 RLM_ACTIONS = {"answer", "step", "llm", "think", "fail"}
