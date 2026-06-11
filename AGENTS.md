@@ -10,8 +10,8 @@ on Monty. The public package entry point is `fleshwound.run_step`.
 - Budget accounting: `fleshwound/budget.py`.
 - Catalog registry/context/provider: `fleshwound/catalog.py`,
   `fleshwound/context.py`, and `fleshwound/provider.py`.
-- Built-in kinds: currently consolidated in `fleshwound/kinds/core.py`; the
-  preferred long-term shape is one module per kind.
+- Built-in kinds: one module per kind under `fleshwound/kinds/`; shared helpers
+  in `_shared.py`, `_minimal_input.py`, and `_llm_json.py`.
 - Tests: `tests/`, with per-kind groups in `tests/kinds/`.
 - Historical design notes: `docs/history/`.
 

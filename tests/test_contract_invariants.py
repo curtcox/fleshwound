@@ -12,9 +12,9 @@ from tests._golden import assert_deterministic
 
 
 def _minimal_input(name: str):
-    from fleshwound.kinds.core import _minimal_input
+    from fleshwound.kinds._minimal_input import minimal_input
 
-    return _minimal_input(name)
+    return minimal_input(name)
 
 
 def test_every_registered_kind_has_json_serializable_minimal_result():

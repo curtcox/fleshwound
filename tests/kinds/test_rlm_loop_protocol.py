@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from fleshwound.kinds.core import _parse_rlm_action, _validate_rlm_action
+from fleshwound.kinds.rlm_loop import _parse_rlm_action, _validate_rlm_action
 from fleshwound.runner import run_step
 
 from conftest import assert_ok

@@ -6,7 +6,7 @@ Status as of the current implementation:
 
 - [x] Phase 1 is implemented.
 - [x] Phase 2 is implemented.
-- [x] `rlm_loop` is registered as a catalog kind in `fleshwound/kinds/core.py`.
+- [x] `rlm_loop` is registered as a catalog kind in `fleshwound/kinds/rlm_loop.py`.
 - [x] The loop uses structured JSON actions as its primary protocol.
 - [x] Direct answer, child step, direct LLM, think, fail, malformed-output, max-iteration, unknown-child-kind, and depth-floor paths are covered by tests.
 - [x] Strict protocol mode exists and is tested.
@@ -15,7 +15,7 @@ Status as of the current implementation:
 
 Remaining follow-up work:
 
-- [ ] Decide whether to move the RLM helpers and executor from `fleshwound/kinds/core.py` into a dedicated `fleshwound/kinds/rlm.py` module as the implementation grows.
+- [x] RLM helpers and executor live in `fleshwound/kinds/rlm_loop.py`.
 - [ ] Add an `include_model_text` input flag if traces become too token-heavy for production use.
 - [ ] Consider warnings for unknown top-level fields in strict mode; the current implementation accepts them.
 - [ ] Add more golden coverage for representative `rlm_loop` traces if future changes make trace stability important.
@@ -31,7 +31,7 @@ This plan assumes the existing `fleshwound` architecture:
 - `ctx.llm(...)` is the model-call primitive.
 - `ctx.budget()` exposes remaining budget.
 - `ctx.catalog` exposes available recursion kinds.
-- catalog entries live under `fleshwound/kinds/core.py` or a new kinds module.
+- catalog entries live under `fleshwound/kinds/` (one module per kind).
 - tests live under `tests/kinds/`.
 
 ---
@@ -148,10 +148,10 @@ def rlm_loop(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
 Recommended location:
 
 ```text
-fleshwound/kinds/core.py
+fleshwound/kinds/rlm_loop.py
 ```
 
-or, if you want to keep `core.py` smaller:
+or, if you want to keep shared helpers separate:
 
 ```text
 fleshwound/kinds/rlm.py
@@ -795,7 +795,7 @@ Status: **complete**, with optional follow-ups noted below.
 ## Add or Modify
 
 ```text
-fleshwound/kinds/core.py
+fleshwound/kinds/rlm_loop.py
 ```
 
 or:
@@ -850,7 +850,7 @@ Completed:
 
 Remaining:
 
-- [ ] Optional: split `rlm_loop` into a dedicated module if `core.py` becomes too crowded.
+- [x] `rlm_loop` lives in a dedicated module (`fleshwound/kinds/rlm_loop.py`).
 - [ ] Optional: add `include_model_text` to suppress raw model text in traces.
 - [ ] Optional: add warning or rejection behavior for unknown top-level fields in strict mode.
 
@@ -868,9 +868,11 @@ Reason: it avoids fragile arbitrary-code parsing and makes Phase 2 mostly a hard
 Recommendation: reject explicit over-budget requests, but provide safe defaults when no request is supplied.  
 Reason: clamping can hide model mistakes and make traces harder to reason about.
 
-## Decision 3: Should `rlm_loop` live in `core.py`?
+## Decision 3: Should `rlm_loop` live in its own module?
 
-Recommendation: start in `core.py` if the repo is still small; move to `fleshwound/kinds/rlm.py` once it grows beyond one executor plus helpers.
+Recommendation: yes. `rlm_loop` and its protocol helpers now live in
+`fleshwound/kinds/rlm_loop.py`; other kinds each have their own module under
+`fleshwound/kinds/`.
 
 ## Decision 4: Should the trace include full model text?
 

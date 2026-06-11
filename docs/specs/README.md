@@ -18,7 +18,7 @@ directory are supporting specs, implementation plans, or deferred design notes.
 
 - `catalog-implementation-plan.md` - TDD plan and historical progress notes for
   catalog implementation. Some layout preferences in this plan predate the
-  current consolidated `fleshwound/kinds/core.py`.
+  one-module-per-kind layout under `fleshwound/kinds/`.
 - `rlm_plan.md` - plan and progress notes for the RLM loop.
 
 ## Long-Term Plans
