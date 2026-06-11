@@ -1,5 +1,5 @@
 {
-  "hash": "d0399d9b66180387f355950461d8d3ca9681f033da050faf3e4e35151325f81c",
+  "hash": "eb2bda4ed03c223e7b4badba235ab5e225e422f412bf78a14d48d1235a8e8eec",
   "input": {},
   "value_sample": {
     "kinds": [
@@ -186,6 +186,10 @@
       {
         "convention": "delegates with supplied provider object if present",
         "name": "provider_swap"
+      },
+      {
+        "convention": "non-Monty infinite loop fixture",
+        "name": "py_spin"
       },
       {
         "convention": "delegate using random default policy",

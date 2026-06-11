@@ -17,7 +17,7 @@ def _minimal_input(name: str):
 def test_every_registered_kind_has_json_serializable_minimal_result():
     for name in sorted(catalog.entries):
         ledger = BudgetLedger(
-            {"tokens": 1000000, "steps": 300, "depth": 8, "tool_calls": 100}
+            {"tokens": 1000000, "steps": 300, "depth": 8, "tool_calls": 100, "compute": 1_000_000}
         )
         result = run_step(
             _minimal_input(name), kind=name, options=RunOptions(ledger=ledger)
@@ -28,7 +28,7 @@ def test_every_registered_kind_has_json_serializable_minimal_result():
 def test_every_registered_kind_charges_host_step_on_entry():
     for name in sorted(catalog.entries):
         ledger = BudgetLedger(
-            {"tokens": 1000000, "steps": 300, "depth": 8, "tool_calls": 100}
+            {"tokens": 1000000, "steps": 300, "depth": 8, "tool_calls": 100, "compute": 1_000_000}
         )
         run_step(_minimal_input(name), kind=name, options=RunOptions(ledger=ledger))
         assert any(
@@ -54,7 +54,13 @@ def test_catalog_self_test_runs_full_catalog_without_unexpected_host_errors():
             {"kinds_to_exercise": None},
             kind="catalog_self_test",
             options=RunOptions(
-                budget={"tokens": 1000000, "steps": 600, "depth": 8, "tool_calls": 200}
+                budget={
+                    "tokens": 1000000,
+                    "steps": 600,
+                    "depth": 8,
+                    "tool_calls": 200,
+                    "compute": 1_000_000,
+                }
             ),
         )
     )
@@ -70,6 +76,12 @@ def test_every_registered_kind_has_regression_canary_golden():
             name,
             _minimal_input(name),
             provider=provider,
-            budget={"tokens": 1000000, "steps": 600, "depth": 8, "tool_calls": 200},
+            budget={
+                "tokens": 1000000,
+                "steps": 600,
+                "depth": 8,
+                "tool_calls": 200,
+                "compute": 1_000_000,
+            },
         )
         assert len(digest) == 64

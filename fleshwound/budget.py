@@ -6,12 +6,16 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 
+_DEFAULT_OMITTED_COMPUTE = 1_000_000
+
+
 @dataclass(frozen=True)
 class BudgetLimit:
     tokens: int
     steps: int
     depth: int
     tool_calls: int
+    compute: int
 
     @classmethod
     def from_value(cls, value: "BudgetLimit | dict[str, int]") -> "BudgetLimit":
@@ -22,6 +26,7 @@ class BudgetLimit:
             steps=int(value.get("steps", 0)),
             depth=int(value.get("depth", 0)),
             tool_calls=int(value.get("tool_calls", 0)),
+            compute=int(value.get("compute", _DEFAULT_OMITTED_COMPUTE)),
         )
 
     def to_dict(self) -> dict[str, int]:
@@ -33,6 +38,7 @@ class BudgetUsage:
     tokens: int = 0
     steps: int = 0
     tool_calls: int = 0
+    compute: int = 0
 
     def to_dict(self) -> dict[str, int]:
         return asdict(self)
@@ -127,12 +133,18 @@ class BudgetLedger:
             steps=node.limit.steps - node.used.steps,
             depth=node.limit.depth,
             tool_calls=node.limit.tool_calls - node.used.tool_calls,
+            compute=node.limit.compute - node.used.compute,
         )
         return BudgetSnapshot(
             budget_id=node.budget_id,
             parent_budget_id=node.parent_budget_id,
             limit=node.limit,
-            used=BudgetUsage(node.used.tokens, node.used.steps, node.used.tool_calls),
+            used=BudgetUsage(
+                node.used.tokens,
+                node.used.steps,
+                node.used.tool_calls,
+                node.used.compute,
+            ),
             remaining=remaining,
         )
 
@@ -144,7 +156,27 @@ class BudgetLedger:
             "steps_remaining": snap.remaining.steps,
             "depth_remaining": snap.remaining.depth,
             "tool_calls_remaining": snap.remaining.tool_calls,
+            "compute_remaining": snap.remaining.compute,
         }
+
+    def charge_compute(self, budget_id: str, amount: int, reason: str) -> bool:
+        if amount < 0:
+            raise ValueError("compute charge must be non-negative")
+        node = self._node(budget_id)
+        if node.used.compute + amount > node.limit.compute:
+            self._event(budget_id, "deny", {"compute": amount}, reason)
+            return False
+        node.used.compute += amount
+        self._event(budget_id, "charge_compute", {"compute": amount}, reason)
+        return True
+
+    def exhaust_compute(self, budget_id: str, reason: str) -> None:
+        node = self._node(budget_id)
+        remaining = node.limit.compute - node.used.compute
+        if remaining <= 0:
+            return
+        node.used.compute = node.limit.compute
+        self._event(budget_id, "charge_compute", {"compute": remaining}, reason)
 
     def charge_tokens(self, budget_id: str, amount: int, reason: str) -> bool:
         if amount < 0:
@@ -191,10 +223,12 @@ class BudgetLedger:
             and request.steps >= 1
             and request.depth >= 1
             and request.tool_calls >= 0
+            and request.compute >= 0
             and request.tokens <= available.tokens
             and request.steps <= available.steps
             and request.depth <= available.depth - 1
             and request.tool_calls <= available.tool_calls
+            and request.compute <= available.compute
         )
         if not valid:
             self._event(parent_budget_id, "deny", request.to_dict(), reason)
@@ -204,6 +238,7 @@ class BudgetLedger:
         parent.used.tokens += request.tokens
         parent.used.steps += request.steps
         parent.used.tool_calls += request.tool_calls
+        parent.used.compute += request.compute
         self._nodes[child_id] = _BudgetNode(child_id, parent_budget_id, request, BudgetUsage())
         self._event(
             parent_budget_id,
@@ -225,6 +260,7 @@ class BudgetLedger:
         parent.used.tokens -= remaining.tokens
         parent.used.steps -= remaining.steps
         parent.used.tool_calls -= remaining.tool_calls
+        parent.used.compute -= remaining.compute
         self._event(child.parent_budget_id, "refund_child", remaining.to_dict(), reason)
         child.closed = True
         self._event(child_budget_id, "close_child", {}, reason)

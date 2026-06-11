@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from fleshwound.budget import BudgetLedger
 from fleshwound.provider import CallableProvider, ModelTextResult, Usage
 from fleshwound.runner import RunOptions, run_step
@@ -142,6 +144,121 @@ class TestMidExecutionPrimitiveBoundaries:
             ),
             "budget_denied",
         )
+
+
+class TestRunawayMontyPreemption:
+    def test_monty_infinite_recursion_is_killed_with_budget_exhausted(self):
+        assert_host_error(
+            run_step(
+                {"target": "recurse"},
+                kind="budget_hog",
+                options=RunOptions(
+                    provider=provider(),
+                    budget={
+                        "tokens": 0,
+                        "steps": 1,
+                        "depth": 1,
+                        "tool_calls": 0,
+                        "compute": 8,
+                    },
+                ),
+            ),
+            "budget_exhausted",
+        )
+
+    @pytest.mark.integration
+    def test_monty_infinite_loop_is_killed_with_budget_exhausted(self):
+        assert_host_error(
+            run_step(
+                {"target": "spin"},
+                kind="budget_hog",
+                options=RunOptions(
+                    provider=provider(),
+                    budget={
+                        "tokens": 0,
+                        "steps": 1,
+                        "depth": 1,
+                        "tool_calls": 0,
+                        "compute": 20,
+                    },
+                ),
+            ),
+            "budget_exhausted",
+        )
+
+    def test_bounded_monty_loop_succeeds_under_compute_budget(self):
+        value = assert_ok(
+            run_step(
+                {"code": "total = 0\nfor i in range(100):\n    total = total + 1\ntotal"},
+                kind="monty_exec",
+                options=RunOptions(
+                    provider=provider(),
+                    budget={
+                        "tokens": 0,
+                        "steps": 1,
+                        "depth": 1,
+                        "tool_calls": 0,
+                        "compute": 1_000_000,
+                    },
+                ),
+            )
+        )
+        assert value == 100
+
+    def test_compute_limit_is_independent_of_step_budget(self):
+        assert_host_error(
+            run_step(
+                {"target": "spin"},
+                kind="budget_hog",
+                options=RunOptions(
+                    provider=provider(),
+                    budget={
+                        "tokens": 0,
+                        "steps": 100,
+                        "depth": 8,
+                        "tool_calls": 0,
+                        "compute": 5,
+                    },
+                ),
+            ),
+            "budget_exhausted",
+        )
+
+    def test_ledger_records_compute_exhaustion_on_monty_kill(self):
+        ledger = BudgetLedger(
+            {
+                "tokens": 0,
+                "steps": 1,
+                "depth": 1,
+                "tool_calls": 0,
+                "compute": 6,
+            }
+        )
+        assert_host_error(
+            run_step(
+                {"target": "recurse"},
+                kind="budget_hog",
+                options=RunOptions(provider=provider(), ledger=ledger),
+            ),
+            "budget_exhausted",
+        )
+        assert any(event.kind == "charge_compute" for event in ledger.events)
+        assert ledger.snapshot("root").remaining.compute == 0
+
+
+class TestNonMontyExecutorGuard:
+    @pytest.mark.integration
+    @pytest.mark.timeout(2)
+    def test_non_monty_executor_spin_times_out(self):
+        with pytest.raises(BaseException, match="(?i)timeout"):
+            run_step(
+                {"spin": True},
+                kind="py_spin",
+                options=RunOptions(
+                    provider=provider(),
+                    budget={"tokens": 0, "steps": 1, "depth": 1, "tool_calls": 0},
+                ),
+            )
 
 
 class TestDepthFloor:

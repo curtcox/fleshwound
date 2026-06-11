@@ -9,7 +9,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
-site = ["pytest", "pytest-cov", "ruff", "mypy", "pdoc", "markdown", "pygments"]
+site = ["pytest", "pytest-cov", "pytest-timeout", "ruff", "mypy", "pdoc", "markdown", "pygments"]
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -20,6 +20,7 @@ include = ["fleshwound*"]
 
 [tool.pytest.ini_options]
 pythonpath = [".", "tests"]
+timeout = 30
 markers = [
     "integration: exercises the full runner path with real integration boundaries",
 ]

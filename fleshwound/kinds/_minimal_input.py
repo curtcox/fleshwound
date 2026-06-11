@@ -62,4 +62,5 @@ def minimal_input(name: str) -> Any:
         "kind_lister": {},
         "always_partial": {},
         "rlm_loop": {"task": "return ok", "max_iterations": 1},
+        "py_spin": {},
     }.get(name, {})

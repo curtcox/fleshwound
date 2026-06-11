@@ -16,6 +16,7 @@ from typing import Any
 
 from ..catalog import register
 from ..errors import HostError
+from ._shared import monty_run
 
 
 def _maybe_stop(stop_on_exhaustion: bool, code: str, message: str) -> None:
@@ -42,6 +43,12 @@ def budget_hog(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
         if not charged:
             _maybe_stop(stop_on_exhaustion, "budget_exhausted", "Tool-call budget exhausted.")
         return {"target": target, "tool_call_charged": charged, "budget": ctx.budget()}
+    if target == "spin":
+        monty_run("while True:\n    pass", input, ctx)
+        return {"target": target, "budget": ctx.budget()}
+    if target == "recurse":
+        monty_run("def f():\n    return f()\nf()", input, ctx)
+        return {"target": target, "budget": ctx.budget()}
     if target == "steps":
         result = ctx.step(
             {},

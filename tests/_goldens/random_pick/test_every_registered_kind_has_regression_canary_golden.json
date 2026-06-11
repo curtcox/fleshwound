@@ -1,5 +1,5 @@
 {
-  "hash": "0cfbdec04e3285c2b804046a7f0ddfc1ec938e7ce91c610a8d4d5a2b9b20c9d0",
+  "hash": "e451160a5a59220dfe07507fd3fcd305154c33108f95285b294918a49fd9ebe4",
   "input": {
     "inner_input": {}
   },
@@ -330,6 +330,13 @@
             "expected_host_error": false,
             "host_error": null,
             "kind": "provider_swap",
+            "outcome": "ok",
+            "unexpected_host_error": false
+          },
+          {
+            "expected_host_error": false,
+            "host_error": null,
+            "kind": "py_spin",
             "outcome": "ok",
             "unexpected_host_error": false
           },

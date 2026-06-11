@@ -45,7 +45,10 @@ class TestBudget:
         )
         assert assert_ok(result) == "x"
         assert [(event.kind, event.amount) for event in ledger.events] == [
-            ("create_root", {"tokens": 0, "steps": 1, "depth": 1, "tool_calls": 0}),
+            (
+                "create_root",
+                {"tokens": 0, "steps": 1, "depth": 1, "tool_calls": 0, "compute": 1_000_000},
+            ),
             ("charge_step", {"steps": 1}),
         ]
 

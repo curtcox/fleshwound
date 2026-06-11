@@ -65,8 +65,10 @@ class TestBudget:
             "create_root",
             "charge_step",
             "charge_tokens",
+            "charge_compute",
         ]
-        assert ledger.events[-1].amount == {"tokens": 5}
+        assert ledger.events[-2].amount == {"tokens": 5}
+        assert ledger.events[-1].amount == {"compute": 1}
 
 
 class TestFailure:

@@ -72,6 +72,18 @@ Each kind's Python module under `fleshwound/kinds/` repeats the purpose, usage, 
 - **uses** — Monty executor; deliberately raises inside Monty.
 - **stresses** — §4 host safety net: Monty exception → `monty_error` (companion to `noop_fail`, which raises in host Python → `executor_error`).
 
+### `py_spin`
+
+- **purpose** — Non-Monty infinite loop fixture for pytest-timeout guard tests.
+- **when to use** — Verify plain-Python executors are not preempted by Fleshwound compute limits.
+- **similar kinds** — `budget_hog` target `spin` (Monty runaway preemption); `noop_fail` (host failure fixtures).
+- **prefer alternatives when** — Use `budget_hog` `spin` to test Monty compute preemption.
+- **input** — `{"spin"?: bool}`; default idle return when omitted or false.
+- **value** — `{"status": "idle"}` or never reached when spinning.
+- **charges** — one `step` on entry only.
+- **uses** — none when idle; tight `while True` when `spin` is true.
+- **stresses** — non-Monty executors rely on external timeout guards, not compute budget.
+
 ---
 
 ## Group B — Non-recursive leaves (single tool, no children)
@@ -266,9 +278,9 @@ Each kind's Python module under `fleshwound/kinds/` repeats the purpose, usage, 
 - **when to use** — Contract tests for mid-execution budget exhaustion at host-primitive boundaries.
 - **similar kinds** — `infinite_descent` (`budget_denied` via depth); `always_host_error` (arbitrary codes); `noop_fail` (exception, not budget).
 - **prefer alternatives when** — Use `infinite_descent` for depth-floor denial; use `always_host_error` for non-exhaustion codes; use real workloads to test token limits in integration tests.
-- **input** — `{"target": "tokens"|"steps"|"tool_calls"}`.
-- **uses** — burns the targeted dimension to zero, then attempts one more call → must observe `host_error{code: "budget_exhausted"}` on the next `ctx.llm` / `ctx.step` call.
-- **stresses** — §4 `budget_exhausted` surfaces as a value, not an exception; mid-execution stopping at host-primitive boundaries (the only place the host can interrupt without sandboxing the executor body).
+- **input** — `{"target": "tokens"|"steps"|"tool_calls"|"spin"|"recurse", "stop_on_exhaustion"?: bool}`.
+- **uses** — burns the targeted dimension to zero, then attempts one more call → must observe `host_error{code: "budget_exhausted"}` on the next `ctx.llm` / `ctx.step` call. Targets `spin` and `recurse` run Monty runaway loops to observe compute-budget preemption.
+- **stresses** — §4 `budget_exhausted` surfaces as a value, not an exception; mid-execution stopping at host-primitive boundaries and Monty compute limits.
 
 ### `infinite_descent`
 

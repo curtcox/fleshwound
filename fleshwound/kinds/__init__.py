@@ -44,6 +44,7 @@ from . import patch_set_writer as patch_set_writer  # noqa: F401
 from . import pipeline as pipeline  # noqa: F401
 from . import precondition_gate as precondition_gate  # noqa: F401
 from . import program_writer as program_writer  # noqa: F401
+from . import py_spin as py_spin  # noqa: F401
 from . import prose_writer as prose_writer  # noqa: F401
 from . import provider_swap as provider_swap  # noqa: F401
 from . import random_pick as random_pick  # noqa: F401

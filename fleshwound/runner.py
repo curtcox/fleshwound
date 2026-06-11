@@ -19,7 +19,13 @@ from .provider import CallableProvider, ModelProvider, Usage
 import fleshwound.kinds  # noqa: F401  side-effect: register built-ins
 
 
-DEFAULT_BUDGET = {"tokens": 100_000, "steps": 32, "depth": 8, "tool_calls": 16}
+DEFAULT_BUDGET = {
+    "tokens": 100_000,
+    "steps": 32,
+    "depth": 8,
+    "tool_calls": 16,
+    "compute": 64,
+}
 HOST_ERROR_CODES = {
     "budget_exhausted",
     "budget_denied",
@@ -44,7 +50,8 @@ class RunOptions:
 
     Attributes:
         budget: Root budget envelope. A :class:`~fleshwound.budget.BudgetLimit` or
-            dict with keys ``tokens``, ``steps``, ``depth``, and ``tool_calls``.
+            dict with keys ``tokens``, ``steps``, ``depth``, ``tool_calls``, and
+            ``compute``.
             Used only when :attr:`ledger` is omitted; in that case a new root
             :class:`~fleshwound.budget.BudgetLedger` is created from this value
             (defaulting to :data:`DEFAULT_BUDGET` when both are omitted). Child

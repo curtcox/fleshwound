@@ -132,13 +132,20 @@ def _normalize_budget_request(value: dict[str, Any]) -> dict[str, int] | str:
             "steps": int(value.get("steps", 0)),
             "depth": int(value.get("depth", 0)),
             "tool_calls": int(value.get("tool_calls", 0)),
+            "compute": int(value.get("compute", 0)),
         }
     except (TypeError, ValueError):
         return "step.request values must be integers"
 
 
 def _request_over_budget(request: dict[str, int], budget: dict[str, Any]) -> str | None:
-    if request["tokens"] < 0 or request["steps"] < 1 or request["depth"] < 1 or request["tool_calls"] < 0:
+    if (
+        request["tokens"] < 0
+        or request["steps"] < 1
+        or request["depth"] < 1
+        or request["tool_calls"] < 0
+        or request["compute"] < 0
+    ):
         return "step.request has invalid budget values"
     if request["tokens"] > int(budget["tokens_remaining"]):
         return "step.request exceeds available tokens"
@@ -148,6 +155,8 @@ def _request_over_budget(request: dict[str, int], budget: dict[str, Any]) -> str
         return "step.request exceeds available depth"
     if request["tool_calls"] > int(budget["tool_calls_remaining"]):
         return "step.request exceeds available tool calls"
+    if request["compute"] > int(budget["compute_remaining"]):
+        return "step.request exceeds available compute"
     return None
 
 
@@ -163,6 +172,10 @@ def _default_child_request(ctx: Any, input: dict[str, Any]) -> dict[str, int] | 
         "tool_calls": min(
             int(requested.get("tool_calls", int(snap["tool_calls_remaining"]) // 2)),
             int(snap["tool_calls_remaining"]),
+        ),
+        "compute": min(
+            int(requested.get("compute", int(snap["compute_remaining"]) // 2)),
+            int(snap["compute_remaining"]),
         ),
     }
 
