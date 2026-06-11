@@ -19,6 +19,7 @@ from pathlib import Path
 import pytest
 
 from fleshwound.fake_llm import fake_llm
+from fleshwound.provider import CallableProvider
 from fleshwound.runner import run_step
 
 
@@ -32,11 +33,18 @@ TASK = (
 
 @pytest.fixture(scope="module")
 def doctor_script(tmp_path_factory) -> Path:
-    result = run_step(task=TASK, llm=fake_llm)
+    result = run_step(
+        {"task": TASK, "context": None, "output_schema": None},
+        provider=CallableProvider(fake_llm),
+        kind="program_writer",
+    )
 
-    assert isinstance(result, dict), f"runner did not return a dict: {result!r}"
-    assert result.get("status") == "complete", f"step did not complete: {result!r}"
-    program = result.get("program") or ""
+    assert isinstance(result, dict), f"runner did not return an envelope dict: {result!r}"
+    assert result.get("outcome") == "ok", f"step host failed: {result!r}"
+    value = result.get("value")
+    assert isinstance(value, dict), f"step value is not a dict: {result!r}"
+    assert value.get("status") == "complete", f"step did not complete: {result!r}"
+    program = value.get("program") or ""
     assert program.strip(), "step produced an empty program"
     assert program.lstrip().startswith("#!"), "program is not a script with a shebang"
     assert "pydantic_monty" in program, "doctor must check pydantic_monty"

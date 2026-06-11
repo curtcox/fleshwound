@@ -12,7 +12,6 @@ def test_rlm_loop_kind_and_protocol_docs_exist():
 
     assert "rlm_loop" in kind_doc
     assert "max_iterations" in kind_doc
-    assert "strict_protocol" in kind_doc
     assert "trace" in kind_doc
 
     assert "fleshwound-rlm-action/1" in protocol_doc

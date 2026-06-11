@@ -23,8 +23,7 @@ go through `ctx.llm(...)`, and budget/depth enforcement remains with the host.
     "depth": 1,
     "tool_calls": 0
   },
-  "system_hint": "",
-  "strict_protocol": false
+  "system_hint": ""
 }
 ```
 
@@ -35,8 +34,8 @@ go through `ctx.llm(...)`, and budget/depth enforcement remains with the host.
 - `child_kind` is the fallback kind for `step` actions without `kind`.
 - `child_request` is the default child budget when an action omits `request`.
 - `system_hint` is extra prompt guidance for the model.
-- `strict_protocol` requires protocol-marked JSON actions and rejects prose
-  wrapped around raw JSON.
+- Actions must include `"protocol": "fleshwound-rlm-action/1"`; prose
+  wrapped around raw JSON is rejected while fenced JSON is accepted.
 
 ## Output
 

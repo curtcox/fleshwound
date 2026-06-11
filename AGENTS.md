@@ -18,7 +18,6 @@ on Monty. The public package entry point is `fleshwound.run_step`.
 ## Active Vs Long-Term Context
 
 - Active API: `run_step(input, budget, provider, kind=...)`.
-- Legacy API: `run_step(task=..., llm=...)`, kept for the doctor path.
 - Active execution mode: embedded/in-process only.
 - Long-term plans: Larql provider integration and spawned workers under
   `docs/specs/*larql*` and `docs/specs/*spawned*`.
@@ -53,10 +52,8 @@ make test-one PYTEST_ARGS='tests/kinds/test_group_a.py::TestBudget'
 
 - `import fleshwound.kinds` registers built-in catalog entries by import side
   effect. See `fleshwound/kinds/__init__.py`.
-- `run_step(task=..., llm=...)` is the legacy doctor path. New work should use
-  the contract-shaped `run_step(input, budget, provider, kind=...)` path.
 - `fleshwound/kinds/program_writer_prompt.md` is the prompt asset for
-  `program_writer` and for the legacy doctor path.
+  `program_writer`.
 - `pytest --record` rewrites files under `tests/_goldens/`; use it only when
   intentionally updating determinism fixtures.
 - `tools/build_site.py --out PATH` deletes and recreates `PATH`.

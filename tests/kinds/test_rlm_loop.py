@@ -13,7 +13,7 @@ def _provider(*texts: str) -> FakeProvider:
 
 
 def test_rlm_loop_completes_with_direct_answer():
-    fake = _provider('{"action": "answer", "value": {"result": 42}}')
+    fake = _provider('{"protocol":"fleshwound-rlm-action/1","action":"answer","value":{"result":42}}')
 
     value = assert_ok(run_step({"task": "compute", "max_iterations": 3}, provider=fake, kind="rlm_loop"))
 
@@ -25,8 +25,8 @@ def test_rlm_loop_completes_with_direct_answer():
 
 def test_rlm_loop_delegates_to_child_step():
     fake = _provider(
-        json.dumps({"action": "step", "kind": "constant", "input": {"value": "child result"}}),
-        json.dumps({"action": "answer", "value": "done"}),
+        json.dumps({"protocol": "fleshwound-rlm-action/1", "action": "step", "kind": "constant", "input": {"value": "child result"}}),
+        json.dumps({"protocol": "fleshwound-rlm-action/1", "action": "answer", "value": "done"}),
     )
 
     value = assert_ok(
@@ -48,8 +48,8 @@ def test_rlm_loop_delegates_to_child_step():
 
 def test_rlm_loop_handles_unknown_child_kind_without_crashing():
     fake = _provider(
-        json.dumps({"action": "step", "kind": "missing_kind", "input": {}}),
-        json.dumps({"action": "answer", "value": "recovered"}),
+        json.dumps({"protocol": "fleshwound-rlm-action/1", "action": "step", "kind": "missing_kind", "input": {}}),
+        json.dumps({"protocol": "fleshwound-rlm-action/1", "action": "answer", "value": "recovered"}),
     )
 
     value = assert_ok(run_step({"task": "recover", "max_iterations": 3}, provider=fake, kind="rlm_loop"))
@@ -62,8 +62,8 @@ def test_rlm_loop_handles_unknown_child_kind_without_crashing():
 
 def test_rlm_loop_respects_max_iterations():
     fake = _provider(
-        '{"action": "think", "notes": "continue"}',
-        '{"action": "think", "notes": "continue"}',
+        '{"protocol":"fleshwound-rlm-action/1","action":"think","notes":"continue"}',
+        '{"protocol":"fleshwound-rlm-action/1","action":"think","notes":"continue"}',
     )
 
     value = assert_ok(run_step({"task": "ponder", "max_iterations": 2}, provider=fake, kind="rlm_loop"))
@@ -84,7 +84,9 @@ def test_rlm_loop_handles_malformed_model_output():
 
 
 def test_rlm_loop_avoids_child_step_at_depth_floor():
-    fake = _provider(json.dumps({"action": "step", "kind": "constant", "input": {"value": "x"}}))
+    fake = _provider(
+        json.dumps({"protocol": "fleshwound-rlm-action/1", "action": "step", "kind": "constant", "input": {"value": "x"}})
+    )
 
     value = assert_ok(
         run_step(

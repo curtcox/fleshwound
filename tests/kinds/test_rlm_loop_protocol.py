@@ -87,22 +87,17 @@ def test_rlm_loop_assigns_step_result_to_vars():
     assert value["state"]["vars"]["x"]["value"] == 7
 
 
-def test_rlm_loop_strict_mode_rejects_missing_protocol():
-    lax = FakeProvider({r"iteration 1": text_result('{"action":"answer","value":"ok"}')})
-    strict = FakeProvider({r"iteration 1": text_result('{"action":"answer","value":"ok"}')})
+def test_rlm_loop_rejects_missing_protocol():
+    fake = FakeProvider({r"iteration 1": text_result('{"action":"answer","value":"ok"}')})
 
-    lax_value = assert_ok(run_step({"task": "lax", "max_iterations": 1}, provider=lax, kind="rlm_loop"))
-    strict_value = assert_ok(
-        run_step({"task": "strict", "max_iterations": 1, "strict_protocol": True}, provider=strict, kind="rlm_loop")
-    )
+    value = assert_ok(run_step({"task": "missing protocol", "max_iterations": 1}, provider=fake, kind="rlm_loop"))
 
-    assert lax_value["status"] == "complete"
-    assert strict_value["status"] == "partial"
-    assert strict_value["trace"][0]["observation"]["type"] == "validation_error"
-    assert "protocol" in strict_value["trace"][0]["observation"]["message"]
+    assert value["status"] == "partial"
+    assert value["trace"][0]["observation"]["type"] == "validation_error"
+    assert "protocol" in value["trace"][0]["observation"]["message"]
 
 
-def test_rlm_loop_strict_mode_rejects_prose_wrapped_json():
+def test_rlm_loop_rejects_prose_wrapped_json():
     fake = FakeProvider(
         {
             r"iteration 1": text_result(
@@ -112,14 +107,14 @@ def test_rlm_loop_strict_mode_rejects_prose_wrapped_json():
     )
 
     value = assert_ok(
-        run_step({"task": "strict prose", "max_iterations": 1, "strict_protocol": True}, provider=fake, kind="rlm_loop")
+        run_step({"task": "strict prose", "max_iterations": 1}, provider=fake, kind="rlm_loop")
     )
 
     assert value["status"] == "partial"
     assert value["trace"][0]["observation"]["type"] == "parse_error"
 
 
-def test_rlm_loop_strict_mode_accepts_prose_wrapped_fenced_json():
+def test_rlm_loop_accepts_prose_wrapped_fenced_json():
     fake = FakeProvider(
         {
             r"iteration 1": text_result(
@@ -130,7 +125,7 @@ def test_rlm_loop_strict_mode_accepts_prose_wrapped_fenced_json():
     )
 
     value = assert_ok(
-        run_step({"task": "strict fenced prose", "max_iterations": 1, "strict_protocol": True}, provider=fake, kind="rlm_loop")
+        run_step({"task": "strict fenced prose", "max_iterations": 1}, provider=fake, kind="rlm_loop")
     )
 
     assert value["status"] == "complete"

@@ -654,29 +654,13 @@ Only `answer` exits successfully.
 }
 ```
 
-## Strict Mode
+## Protocol Enforcement
 
-Add input field:
-
-```json
-{
-  "strict_protocol": true
-}
-```
-
-When `strict_protocol` is true:
+Protocol enforcement is always on:
 
 - missing protocol is invalid.
 - extra top-level prose is invalid unless a valid fenced JSON block is found.
 - unknown fields may either be rejected or recorded as warnings.
-
-Recommended default:
-
-```text
-strict_protocol = false
-```
-
-until tests and prompts stabilize.
 
 ## Phase 2 Tests
 
@@ -749,7 +733,7 @@ Expected:
 - state vars include `x`.
 - trace records the child `StepResult`.
 
-### Test 5: Strict Mode Rejects Missing Protocol
+### Test 5: Rejects Missing Protocol
 
 Input:
 
@@ -759,8 +743,7 @@ Input:
 
 Expected:
 
-- accepted when `strict_protocol` is false.
-- rejected when `strict_protocol` is true.
+- rejected with a controlled validation error.
 
 ### Test 6: Budget Request Is Clamped or Rejected
 
@@ -782,7 +765,7 @@ Phase 2 is complete. Acceptance status:
 - [x] Protocol parsing and validation helpers are unit-tested.
 - [x] Invalid model output produces traceable controlled errors.
 - [x] Child-step observations can be assigned into loop state.
-- [x] Strict mode is available.
+- [x] Protocol markers are always required.
 - [x] Existing Phase 1 tests still pass.
 - [x] No host contract changes are required.
 
@@ -902,8 +885,7 @@ result = run_step(
     {
         "task": "Solve the problem.",
         "context": {"x": 1},
-        "max_iterations": 4,
-        "strict_protocol": True,
+    "max_iterations": 4,
     },
     {"tokens": 10000, "steps": 16, "depth": 4, "tool_calls": 4},
     provider,

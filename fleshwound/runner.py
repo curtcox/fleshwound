@@ -1,13 +1,11 @@
-"""Contract-shaped Fleshwound runner with legacy doctor compatibility."""
+"""Contract-shaped Fleshwound runner."""
 
 from __future__ import annotations
 
 import hashlib
 import json
 import random
-import re
 import traceback
-from pathlib import Path
 from typing import Any, Callable
 
 from .budget import BudgetLedger, BudgetLimit
@@ -19,7 +17,6 @@ from .provider import CallableProvider, ModelProvider, Usage
 import fleshwound.kinds  # noqa: F401  side-effect: register built-ins
 
 
-STEP_PROMPT_PATH = Path(__file__).resolve().parent / "kinds" / "program_writer_prompt.md"
 DEFAULT_BUDGET = {"tokens": 100_000, "steps": 32, "depth": 8, "tool_calls": 16}
 HOST_ERROR_CODES = {
     "budget_exhausted",
@@ -53,16 +50,6 @@ def _jsonable(value: Any) -> bool:
     except (TypeError, ValueError):
         return False
     return True
-
-
-def _usage_total(usage: Any) -> int:
-    if isinstance(usage, Usage):
-        return usage.to_dict()["total_tokens"]
-    if hasattr(usage, "to_dict"):
-        return int(usage.to_dict().get("total_tokens", 0))
-    if isinstance(usage, dict):
-        return int(usage.get("total_tokens", usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0)))
-    return 0
 
 
 def _usage_dict(usage: Any) -> dict[str, int]:
@@ -124,29 +111,8 @@ def run_step(
     ask_user: Callable[[str], str] | None = None,
     catalog: Catalog | None = None,
     ledger: BudgetLedger | None = None,
-    task: str | None = None,
-    llm: Callable[[str], str] | None = None,
-    context: dict | None = None,
-    output_schema: dict | None = None,
-    token_budget: int = 100_000,
-    depth_remaining: int = 3,
 ) -> dict[str, Any]:
-    """Run one step.
-
-    The modern contract API returns a StepResult envelope. The legacy
-    ``run_step(task=..., llm=...)`` path returns the raw value to keep the
-    original doctor test and README example working.
-    """
-
-    if task is not None or llm is not None:
-        return _legacy_run_step(
-            task=task or "",
-            llm=llm or (lambda prompt: ""),
-            context=context,
-            output_schema=output_schema,
-            token_budget=token_budget,
-            depth_remaining=depth_remaining,
-        )
+    """Run one step using the recursion contract API."""
 
     active_catalog = catalog or default_catalog
     active_provider: ModelProvider
@@ -285,63 +251,3 @@ def _run_allocated_step(
     if not _jsonable(value):
         return host_error("malformed_result", f"Step value is not JSON-serializable for kind {resolved}.")
     return ok(value)
-
-
-def _legacy_run_step(
-    *,
-    task: str,
-    llm: Callable[[str], str],
-    context: dict | None,
-    output_schema: dict | None,
-    token_budget: int,
-    depth_remaining: int,
-) -> dict[str, Any]:
-    try:
-        import pydantic_monty
-    except ImportError as exc:
-        raise RuntimeError("pydantic_monty is required for legacy Monty execution") from exc
-
-    system = STEP_PROMPT_PATH.read_text()
-    user_msg = (
-        f"task = {task!r}\n"
-        f"context = {context!r}\n"
-        f"output_schema = {output_schema!r}\n"
-        "\nProduce your Monty-subset Python now. The value of the final "
-        "expression must be the output dict."
-    )
-    raw = llm(system + "\n\n---\n\n" + user_msg)
-    match = re.search(r"```(?:python)?\s*\n(.*?)```", raw, re.DOTALL)
-    code = (match.group(1) if match else raw).strip()
-    budget_state = {"tokens_remaining": token_budget, "depth_remaining": depth_remaining}
-
-    def host_llm(prompt: str) -> str:
-        budget_state["tokens_remaining"] -= 1000
-        return llm(prompt)
-
-    def host_step(sub_input: dict, request: int) -> dict:
-        if budget_state["depth_remaining"] <= 0:
-            return {"status": "partial", "program": "", "notes": "depth exhausted"}
-        budget_state["tokens_remaining"] -= request
-        return _legacy_run_step(
-            task=sub_input.get("task", ""),
-            llm=llm,
-            context=sub_input.get("context"),
-            output_schema=sub_input.get("output_schema"),
-            token_budget=request,
-            depth_remaining=budget_state["depth_remaining"] - 1,
-        )
-
-    m = pydantic_monty.Monty(code, inputs=["task", "context", "output_schema"])
-    complete = m.run(
-        inputs={"task": task, "context": context, "output_schema": output_schema},
-        external_functions={
-            "llm": host_llm,
-            "step": host_step,
-            "ask_user": lambda question: (_ for _ in ()).throw(RuntimeError(f"ask_user unavailable: {question!r}")),
-            "budget": lambda: dict(budget_state),
-        },
-    )
-    result = getattr(complete, "output", complete)
-    if not isinstance(result, dict):
-        raise RuntimeError(f"step did not return a dict; got {type(result).__name__}: {result!r}")
-    return result

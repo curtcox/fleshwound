@@ -718,7 +718,7 @@ Each kind's Python module under `fleshwound/kinds/` repeats the purpose, usage, 
 - **when to use** — Multi-iteration reasoning tasks that need inspectable traces, child delegation, and explicit partial/error/complete status (see `rlm-loop-kind.md`).
 - **similar kinds** — `meta_planner` (one-shot plan then run); `refine_until` (fixed inner/judge alternation); `program_writer` (single generate-and-run); `conversation` (chat turns only).
 - **prefer alternatives when** — Use `meta_planner` when one plan upfront suffices; use `refine_until` for simple candidate/judge loops; use `program_writer` for one-shot code generation; use `conversation` when no `step` actions are needed.
-- **input** — `{"task": str, "context": dict, "max_iterations": int, "answer_schema": Any|null, "child_kind": str|null, "child_request": BudgetRequest, "system_hint": str, "strict_protocol": bool}` — see `rlm-loop-kind.md` for the full schema and field semantics.
+- **input** — `{"task": str, "context": dict, "max_iterations": int, "answer_schema": Any|null, "child_kind": str|null, "child_request": BudgetRequest, "system_hint": str}` — see `rlm-loop-kind.md` for the full schema and field semantics.
 - **value** — `{"status": "complete"|"partial"|"error", "answer": Any|null, "iterations": int, "trace": [...], "state": {"task", "context", "vars", "trace"}, "notes": str}`.
 - **charges** — tokens per iteration (one `ctx.llm` per cycle); steps/tokens per `step` action inside the loop.
 - **uses** — `ctx.llm`, `ctx.step`, `ctx.catalog`, `ctx.budget`.

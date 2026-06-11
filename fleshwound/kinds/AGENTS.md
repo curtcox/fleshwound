@@ -12,7 +12,7 @@ This directory contains built-in catalog kinds.
 - `_llm_json.py` is the factory for LLM-backed structured JSON kinds.
 - `rlm_loop.py` contains the `rlm_loop` kind and RLM action protocol helpers.
 - `program_writer_prompt.md` is the prompt asset read by the `program_writer`
-  kind and the legacy doctor path.
+  kind.
 
 Use `rg '@register' fleshwound/kinds/` to find a kind quickly.
 

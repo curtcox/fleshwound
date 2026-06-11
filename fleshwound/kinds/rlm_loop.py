@@ -86,12 +86,11 @@ def _strict_rlm_text_error(text: str) -> str | None:
 def _validate_rlm_action(
     action: dict[str, Any] | None,
     *,
-    strict: bool = False,
     budget: dict[str, Any] | None = None,
 ) -> str | None:
     if not isinstance(action, dict):
         return "action must be a JSON object"
-    if strict and action.get("protocol") != RLM_ACTION_PROTOCOL:
+    if action.get("protocol") != RLM_ACTION_PROTOCOL:
         return f"protocol must be {RLM_ACTION_PROTOCOL!r}"
 
     action_name = action.get("action")
@@ -224,7 +223,6 @@ def _execute_rlm_action(
 def rlm_loop(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
     task = str(input.get("task", ""))
     max_iterations = max(0, int(input.get("max_iterations", 8)))
-    strict = bool(input.get("strict_protocol", False))
     trace: list[dict[str, Any]] = []
     state: dict[str, Any] = {"task": task, "context": input.get("context", {}), "vars": {}, "trace": trace}
 
@@ -241,7 +239,7 @@ def rlm_loop(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
             }
 
         model_text = result.get("text", "")
-        parse_error = _strict_rlm_text_error(model_text) if strict else None
+        parse_error = _strict_rlm_text_error(model_text)
         action = None
         if parse_error is None:
             action, parse_error = _parse_rlm_action(model_text)
@@ -249,7 +247,7 @@ def rlm_loop(input: dict[str, Any], ctx: Any) -> dict[str, Any]:
             observation = {"type": "parse_error", "message": parse_error}
             action = None
         else:
-            validation_error = _validate_rlm_action(action, strict=strict, budget=ctx.budget())
+            validation_error = _validate_rlm_action(action, budget=ctx.budget())
             observation = (
                 {"type": "validation_error", "message": validation_error}
                 if validation_error

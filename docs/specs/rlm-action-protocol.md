@@ -16,9 +16,8 @@ Models should return exactly one JSON object and no prose:
 }
 ```
 
-When `strict_protocol` is false, legacy action objects without `protocol` are
-accepted. When it is true, missing protocol markers and prose outside raw JSON
-are controlled validation or parse errors. Fenced JSON blocks are accepted.
+Missing protocol markers are always invalid, and prose outside raw JSON is a
+controlled parse error. Fenced JSON blocks are accepted.
 
 ## Actions
 
