@@ -1,6 +1,6 @@
 # Fleshwound Recursion Kinds Catalog
 
-> This catalog has two jobs. First, it is the reference list of catalog entries that the host ships (or could ship). Second, it is the **contract-stress fixture** for `recursion-contract.md`: each entry calls out the contract clauses it exercises, and the act of enumerating them is how we discover gaps. Issues surfaced while writing this list are collected in §"Contract issues found" at the bottom.
+> This catalog has two jobs. First, it is the reference list of catalog entries that the host ships (or could ship). Second, it is the **contract-stress fixture** for `recursion-contract.md`: each entry calls out the contract clauses it exercises, and the act of enumerating them is how we discover gaps. Unresolved ambiguities are tracked in [`open-contract-issues.md`](open-contract-issues.md).
 >
 > Kinds are grouped by what they stress, not by likely deployment usefulness. Some are degenerate on purpose.
 
@@ -211,7 +211,7 @@ For each kind:
 - **input** — `{"chooser": "literal"|"llm", "literal_kind": str|null, "task_for_chooser": str|null, "inner_input": Any}`.
 - **value** — `{"chosen_kind": str, "result": StepResult}` — `chosen_kind` is the string this kind itself computed and passed to `ctx.step`; it knows it because it produced it, not because the host reported it.
 - **uses** — optionally `ctx.llm` to pick a kind name (Monty assembles a prompt listing `ctx.catalog`), then `ctx.step(inner_input, request, kind=chosen_kind)`.
-- **stresses** — that `kind=` accepts a runtime-computed string (no compile-time restriction); host's `unknown_kind` path when the chooser hallucinates a name; need for `ctx.catalog` (see C-10).
+- **stresses** — that `kind=` accepts a runtime-computed string (`recursion-contract.md` §3); host's `unknown_kind` path when the chooser hallucinates a name; `ctx.catalog` introspection (`recursion-contract.md` §3).
 
 ### `meta_planner`
 
@@ -278,7 +278,7 @@ For each kind:
 
 ## Group I — Filesystem-backed I/O (without granting executors FS access)
 
-> v1 stance: kinds **never** touch the filesystem. The caller materializes input from disk into a JSON blob and writes outputs back. This keeps determinism and sandboxing tight; the alternative (a `ctx.fs` primitive) is C-8 below.
+> v1 stance: kinds **never** touch the filesystem. The caller materializes input from disk into a JSON blob and writes outputs back. This keeps determinism and sandboxing tight; direct FS access would require a new host primitive (`recursion-contract.md` §3; Group M below).
 
 ### `directory_input`
 
@@ -361,7 +361,7 @@ For each kind:
 - **input** — `{}`.
 - **value** — `{"kinds": [{"name": str, "convention": str}]}`.
 - **uses** — reads `ctx.catalog`.
-- **stresses** — C-10 below: `ctx.catalog` must be exposed for this to work. The kind is the smoking gun for the missing primitive.
+- **stresses** — `ctx.catalog` introspection (`recursion-contract.md` §3); this kind is the regression canary that the primitive stays wired.
 
 ### `kind_chooser`
 
@@ -500,33 +500,3 @@ These kinds would be natural to write but are **disallowed** in v1 because they 
 - **`cached`** — memoization across runs. Memo is fine inside one step's input (pure function of input), but a persistent cache that mutates between runs would break the "operation entirely determined by `(input, budget, seed, provider)`" property.
 
 If any of these become necessary, they require a contract change, not just a new catalog entry.
-
-## Contract issues found
-
-Writing this list surfaced these residual ambiguities. They are not blocking — most can be resolved by a one-line clarification in `recursion-contract.md` — but should be settled before implementation.
-
-- **C-1. ~~`ctx.step()` return on default-policy resolution.~~** *(Resolved — rejected.)* Originally proposed adding `resolved_kind` to `StepResult` so kinds like `random_pick` could honestly fill in `chosen_kind`. On review: a caller that cares about the kind specifies it; a caller that did not specify has no use for the answer in its control flow. The only real consumer is post-hoc log analysis, which belongs on the ledger, not the envelope. Resolution: record `resolved_kind` on the `allocate_child` ledger event; do **not** add it to `StepResult`. As a consequence, `random_pick`, `subset_pick`, and `dynamic_dispatch`'s `chosen_kind` field is dropped from their value conventions — those kinds return only `result: StepResult`. Log readers can join against the ledger via `budget_id`.
-
-- **C-2. Where do executors find their own kind?** §6.0 says `ctx.kind` exposes it; that is new in this edit. Confirm. (`inherit_chain` needs it to build its trace.)
-
-- **C-3. Sibling iteration order.** `map_reduce` and `ensemble` assume children allocated in for-loop order get child IDs `parent.1`, `parent.2`, … in that order. `budget-ledger.md` §3 says "child index order is based on allocation order" — confirm "allocation order" means "the order in which `allocate_child` is called on the ledger," not e.g. some completion order. Recommendation: one-line tighten in budget-ledger.md.
-
-- **C-4. `host_error.code: "executor_error"`.** Added in this edit to distinguish Monty failures from non-Monty failures. Is the distinction useful, or should both be `monty_error`? Argument for keeping them separate: debugging — `monty_error` carries a Monty traceback, `executor_error` carries a host-Python traceback, and confusing them slows diagnosis. Argument against: callers don't care; one code means simpler retry logic.
-
-- **C-5. Wall-clock / env nondeterminism.** §7 now says executors "must not rely on" these, but the host does not currently prevent it. Tighten to either (a) constrain Monty's external bindings so `datetime.now()` and `os.environ` are unbound, or (b) accept that determinism is a kind-author responsibility. Recommend (a) for v1; (b) is an audit hole.
-
-- **C-6. `ctx.budget()` snapshot freshness.** When a child is mid-flight, what does the parent's `ctx.budget()` show — the parent's remaining **including** the child's reservation, or excluding it? Embedded mode currently shows excluding (the reservation has already debited the parent). Spawned would show the same after `allocate_child` writes through. Confirm and document.
-
-- **C-7. Charging order on `ctx.llm()` failure.** `budget-ledger.md` §6 says tokens are charged "for whatever the provider reports, including on failure." But §4.1's `llm()` return shape has `usage` field always populated. If the provider returns `{status: "error", usage: {prompt_tokens: 0, ...}, ...}` is the charge zero? Recommend: yes, charge whatever `usage.total_tokens` reports, including zero. Document explicitly.
-
-- **C-8. Side effects and the executor surface.** The catalog's filesystem family (Group I) and the exclusion list (Group M) together expose that the contract has no explicit stance on side effects. v1 default is "executors are pure functions of `(input, ctx-primitive returns)`"; the four `ctx.*` primitives are the only ways out. Recommendation: add one sentence to `recursion-contract.md` §3 saying exactly that, and reference Group M's reasoning. Without it, the next kind author may assume `import requests` is fair game.
-
-- **C-9. `ctx.catalog` introspection.** Several kinds (`dynamic_dispatch`, `meta_planner`, `cascade`, `cond_dispatch`, `kind_lister`, `kind_chooser`, `catalog_self_test`) need to read the available kind names and conventions at runtime. The contract currently does not expose them. Recommendation: add `ctx.catalog: Mapping[str, str]` (name → convention string) as a fifth primitive. Read-only, no charging, no nondeterminism (it's static for the run).
-
-- **C-10. Runtime-computed `kind=`.** `dynamic_dispatch` and `meta_planner` pass a string computed at runtime as `kind=`. Per Q4 this is allowed (kind names are flat strings, behavior comes from input). Worth one line in §6 confirming there is no compile-time / literal restriction.
-
-- **C-11. No hidden state across `ctx.llm` / `ctx.step` calls.** `conversation` is the kind that makes this load-bearing — the entire turn history lives in `input`, not in the host. Recommendation: §7 already implies this but should state it as a numbered constraint, since it directly contradicts how most "chat" libraries work and will be a surprise.
-
-- **C-12. Streaming / incremental output.** Several patterns (`refine_until`, `tournament`, long `conversation`) would benefit from emitting intermediate progress before the final `value`. v1 has no surface for it (one `value` per step). Explicitly out of scope — note in §4 as "v1 returns exactly one value per step; intermediate progress, if any, is logged via the ledger, not returned to the caller."
-
-These twelve issues collectively are the second pass over the contract. C-1 was rejected and recorded as a ledger-event field; C-2 through C-12 are reflected in `recursion-contract.md` and `budget-ledger.md`. No open contract items remain. Resolving them and writing the matching test fixtures from the catalog above is the work that lets implementation begin without rework.

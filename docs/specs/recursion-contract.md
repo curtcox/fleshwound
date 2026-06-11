@@ -239,7 +239,7 @@ The host introduces no other variation. This is the "operation entirely determin
 4. **Hidden state across host-primitive calls.** An executor's behavior on call N must depend only on `input` and on the values it has received back from earlier `ctx.*` calls in the same step. The host carries no cross-call memory on behalf of the executor; concretely, a multi-turn conversation must round-trip its full history through `input`, not through any host-side cache.
 5. **Hidden state across runs.** The same `(input, budget, seed, provider, kind, default_policy)` tuple produces the same execution every time. Memoization-across-runs is therefore disallowed in the host; safe in-step memoization (a pure function of `input`) is the only legal form. See `recursion-kinds-catalog.md` Group P for content-hash caching that respects this constraint.
 
-Executors must not rely on wall-clock time, OS environment, or other ambient nondeterminism. The Monty language limits restrict imports but still expose `datetime`, `os`, and `asyncio`; executors that bind Monty externals should treat reads of those as "do not, for determinism's sake" — the host does not currently sandbox them further. Tightening this is tracked separately.
+Executors must not rely on wall-clock time, OS environment, or other ambient nondeterminism. The Monty language limits restrict imports but still expose `datetime`, `os`, and `asyncio`; executors that bind Monty externals should treat reads of those as "do not, for determinism's sake" — the host does not currently sandbox them further. See [`open-contract-issues.md`](open-contract-issues.md) (C-5).
 
 ## 8. Transport modes
 

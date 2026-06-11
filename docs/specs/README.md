@@ -11,6 +11,8 @@ directory are supporting specs, implementation plans, or deferred design notes.
   contract.
 - `recursion-kinds-catalog.md` - catalog conventions and the boundary of
   allowed vs. excluded v1 kinds.
+- `open-contract-issues.md` - unresolved contract ambiguities surfaced by the
+  catalog stress fixture.
 - `rlm-action-protocol.md` - structured JSON action protocol for `rlm_loop`.
 - `rlm-loop-kind.md` - `rlm_loop` kind behavior.
 
