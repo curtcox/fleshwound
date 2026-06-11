@@ -1,5 +1,5 @@
 {
-  "hash": "7d2ea883ad3fcc0aa32bcb3ba09a75bf4de3a99d7c6b60d347894f2b2737bc12",
+  "hash": "949f44536d50220c92028d43c468764e19d5c22e4c71e9c0ef768b2cafb57b2d",
   "input": {
     "max_iterations": 1,
     "task": "return ok"
@@ -17,7 +17,7 @@
           "iteration": 1,
           "model_text": "{}",
           "observation": {
-            "message": "unknown action: None",
+            "message": "protocol must be 'fleshwound-rlm-action/1'",
             "type": "validation_error"
           }
         }
@@ -31,7 +31,7 @@
         "iteration": 1,
         "model_text": "{}",
         "observation": {
-          "message": "unknown action: None",
+          "message": "protocol must be 'fleshwound-rlm-action/1'",
           "type": "validation_error"
         }
       }
